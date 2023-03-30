@@ -1,94 +1,68 @@
 #!/bin/bash
+# Author: Jrohy
+# modify by zerofo
+# github: https://github.com/Jrohy/multi-xray
 
-# This file is accessible as https://multi.netlify.app/go.sh
+#定时任务北京执行时间(0~23)
+BEIJING_UPDATE_TIME=3
 
-# If not specify, default meaning of return value:
-# 0: Success
-# 1: System error
-# 2: Application error
-# 3: Network error
+#记录最开始运行脚本的路径
+BEGIN_PATH=$(pwd)
 
-# CLI arguments
-PROXY=''
-HELP=''
-FORCE=''
-CHECK=''
-REMOVE=''
-VERSION=''
-VSRC_ROOT='/tmp/xray'
-EXTRACT_ONLY=''
-LOCAL=''
-LOCAL_INSTALL=''
-ERROR_IF_UPTODATE=''
+#安装方式, 0为全新安装, 1为保留xray配置更新
+INSTALL_WAY=0
 
-CUR_VER=""
-NEW_VER=""
-ZIPFILE="/tmp/xray/xray.zip"
-V2RAY_RUNNING=0
+#定义操作变量, 0为否, 1为是
+HELP=0
 
-CMD_INSTALL=""
-CMD_UPDATE=""
-SOFTWARE_UPDATED=0
-KEY="XRay"
-KEY_LOWER="xray"
-REPOS="xtls/xray-core"
+REMOVE=0
 
-SYSTEMCTL_CMD=$(command -v systemctl 2>/dev/null)
+CHINESE=0
+
+BASE_SOURCE_PATH="https://multi.netlify.app"
+
+UTIL_PATH="/etc/xray_util/util.cfg"
+
+UTIL_CFG="$BASE_SOURCE_PATH/xray_util/util_core/util.cfg"
+
+BASH_COMPLETION_SHELL="$BASE_SOURCE_PATH/xray"
+
+CLEAN_IPTABLES_SHELL="$BASE_SOURCE_PATH/xray_util/global_setting/clean_iptables.sh"
+
+#Centos 临时取消别名
+[[ -f /etc/redhat-release && -z $(echo $SHELL|grep zsh) ]] && unalias -a
+
+[[ -z $(echo $SHELL|grep zsh) ]] && ENV_FILE=".bashrc" || ENV_FILE=".zshrc"
 
 #######color code########
-RED="31m"      # Error message
-GREEN="32m"    # Success message
-YELLOW="33m"   # Warning message
-BLUE="36m"     # Info message
+RED="31m"
+GREEN="32m"
+YELLOW="33m"
+BLUE="36m"
+FUCHSIA="35m"
 
-xray_set(){
-    KEY="Xray"
-    KEY_LOWER="xray"
-    REPOS="XTLS/Xray-core"
-    VSRC_ROOT='/tmp/xray'
-    ZIPFILE="/tmp/xray/xray.zip"
+colorEcho(){
+    COLOR=$1
+    echo -e "\033[${COLOR}${@:2}\033[0m"
 }
 
-#########################
-while [[ $# > 0 ]]; do
-    case "$1" in
-        -p|--proxy)
-        PROXY="-x ${2}"
-        shift # past argument
+#######get params#########
+while [[ $# > 0 ]];do
+    key="$1"
+    case $key in
+        --remove)
+        REMOVE=1
         ;;
         -h|--help)
-        HELP="1"
+        HELP=1
         ;;
-        -f|--force)
-        FORCE="1"
+        -k|--keep)
+        INSTALL_WAY=1
+        colorEcho ${BLUE} "keep config to update\n"
         ;;
-        -c|--check)
-        CHECK="1"
-        ;;
-        -x|--xray)
-        xray_set
-        ;;
-        --remove)
-        REMOVE="1"
-        ;;
-        --version)
-        VERSION="$2"
-        shift
-        ;;
-        --extract)
-        VSRC_ROOT="$2"
-        shift
-        ;;
-        --extractonly)
-        EXTRACT_ONLY="1"
-        ;;
-        -l|--local)
-        LOCAL="$2"
-        LOCAL_INSTALL="1"
-        shift
-        ;;
-        --errifuptodate)
-        ERROR_IF_UPTODATE="1"
+        --zh)
+        CHINESE=1
+        colorEcho ${BLUE} "安装中文版..\n"
         ;;
         *)
                 # unknown option
@@ -96,464 +70,236 @@ while [[ $# > 0 ]]; do
     esac
     shift # past argument or value
 done
+#############################
 
-###############################
-colorEcho(){
-    echo -e "\033[${1}${@:2}\033[0m" 1>& 2
+help(){
+    echo "bash xray.sh [-h|--help] [-k|--keep] [--remove]"
+    echo "  -h, --help           Show help"
+    echo "  -k, --keep           keep the config.json to update"
+    echo "      --remove         remove xray,xray && multi-xray"
+    echo "                       no params to new install"
+    return 0
 }
 
-archAffix(){
-    case "$(uname -m)" in
-      'i386' | 'i686')
-        MACHINE='32'
-        ;;
-      'amd64' | 'x86_64')
-        MACHINE='64'
-        ;;
-      'armv5tel')
-        MACHINE='arm32-v5'
-        ;;
-      'armv6l')
-        MACHINE='arm32-v6'
-        grep Features /proc/cpuinfo | grep -qw 'vfp' || MACHINE='arm32-v5'
-        ;;
-      'armv7' | 'armv7l')
-        MACHINE='arm32-v7a'
-        grep Features /proc/cpuinfo | grep -qw 'vfp' || MACHINE='arm32-v5'
-        ;;
-      'armv8' | 'aarch64')
-        MACHINE='arm64-v8a'
-        ;;
-      'mips')
-        MACHINE='mips32'
-        ;;
-      'mipsle')
-        MACHINE='mips32le'
-        ;;
-      'mips64')
-        MACHINE='mips64'
-        ;;
-      'mips64le')
-        MACHINE='mips64le'
-        ;;
-      'ppc64')
-        MACHINE='ppc64'
-        ;;
-      'ppc64le')
-        MACHINE='ppc64le'
-        ;;
-      'riscv64')
-        MACHINE='riscv64'
-        ;;
-      's390x')
-        MACHINE='s390x'
-        ;;
-        *)
-        echo "error: The architecture is not supported."
+removeXRay() {
+    #卸载V2ray脚本
+    bash <(curl -L -s https://multi.netlify.app/go.sh) --remove >/dev/null 2>&1
+    rm -rf /etc/xray >/dev/null 2>&1
+    rm -rf /var/log/xray >/dev/null 2>&1
+
+    #卸载Xray脚本
+    bash <(curl -L -s https://multi.netlify.app/go.sh) --remove -x >/dev/null 2>&1
+    rm -rf /etc/xray >/dev/null 2>&1
+    rm -rf /var/log/xray >/dev/null 2>&1
+
+    #清理xray相关iptable规则
+    bash <(curl -L -s $CLEAN_IPTABLES_SHELL)
+
+    #卸载multi-xray
+    pip uninstall xray_util -y
+    rm -rf /usr/share/bash-completion/completions/xray.bash >/dev/null 2>&1
+    rm -rf /usr/share/bash-completion/completions/xray >/dev/null 2>&1
+    rm -rf /usr/share/bash-completion/completions/xray >/dev/null 2>&1
+    rm -rf /etc/bash_completion.d/xray.bash >/dev/null 2>&1
+    rm -rf /usr/local/bin/xray >/dev/null 2>&1
+    rm -rf /etc/xray_util >/dev/null 2>&1
+    rm -rf /etc/profile.d/iptables.sh >/dev/null 2>&1
+    rm -rf /root/.iptables >/dev/null 2>&1
+
+    #删除xray定时更新任务
+    crontab -l|sed '/SHELL=/d;/xray/d'|sed '/SHELL=/d;/xray/d' > crontab.txt
+    crontab crontab.txt >/dev/null 2>&1
+    rm -f crontab.txt >/dev/null 2>&1
+
+    if [[ ${PACKAGE_MANAGER} == 'dnf' || ${PACKAGE_MANAGER} == 'yum' ]];then
+        systemctl restart crond >/dev/null 2>&1
+    else
+        systemctl restart cron >/dev/null 2>&1
+    fi
+
+    #删除multi-xray环境变量
+    sed -i '/xray/d' ~/$ENV_FILE
+    sed -i '/xray/d' ~/$ENV_FILE
+    source ~/$ENV_FILE
+
+    RC_SERVICE=`systemctl status rc-local|grep loaded|egrep -o "[A-Za-z/]+/rc-local.service"`
+
+    RC_FILE=`cat $RC_SERVICE|grep ExecStart|awk '{print $1}'|cut -d = -f2`
+
+    sed -i '/iptables/d' ~/$RC_FILE
+
+    colorEcho ${GREEN} "uninstall success!"
+}
+
+closeSELinux() {
+    #禁用SELinux
+    if [ -s /etc/selinux/config ] && grep 'SELINUX=enforcing' /etc/selinux/config; then
+        sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+        setenforce 0
+    fi
+}
+
+checkSys() {
+    #检查是否为Root
+    [ $(id -u) != "0" ] && { colorEcho ${RED} "Error: You must be root to run this script"; exit 1; }
+
+    if [[ `command -v apt-get` ]];then
+        PACKAGE_MANAGER='apt-get'
+    elif [[ `command -v dnf` ]];then
+        PACKAGE_MANAGER='dnf'
+    elif [[ `command -v yum` ]];then
+        PACKAGE_MANAGER='yum'
+    else
+        colorEcho $RED "Not support OS!"
         exit 1
-        ;;
-    esac
-
-	return 0
+    fi
 }
 
-zipRoot() {
-    unzip -lqq "$1" | awk -e '
-        NR == 1 {
-            prefix = $4;
-        }
-        NR != 1 {
-            prefix_len = length(prefix);
-            cur_len = length($4);
-
-            for (len = prefix_len < cur_len ? prefix_len : cur_len; len >= 1; len -= 1) {
-                sub_prefix = substr(prefix, 1, len);
-                sub_cur = substr($4, 1, len);
-
-                if (sub_prefix == sub_cur) {
-                    prefix = sub_prefix;
-                    break;
-                }
-            }
-
-            if (len == 0) {
-                prefix = "";
-                nextfile;
-            }
-        }
-        END {
-            print prefix;
-        }
-    '
-}
-
-downloadV2Ray(){
-    rm -rf /tmp/$KEY_LOWER
-    mkdir -p /tmp/$KEY_LOWER
-    local PACK_NAME=$KEY_LOWER
-    [[ $KEY == "Xray" ]] && PACK_NAME=$KEY
-    DOWNLOAD_LINK="https://github.com/$REPOS/releases/download/${NEW_VER}/${PACK_NAME}-linux-${MACHINE}.zip"
-    colorEcho ${BLUE} "Downloading $KEY: ${DOWNLOAD_LINK}"
-    curl ${PROXY} -L -H "Cache-Control: no-cache" -o ${ZIPFILE} ${DOWNLOAD_LINK}
-    if [ $? != 0 ];then
-        colorEcho ${RED} "Failed to download! Please check your network or try again."
-        return 3
-    fi
-    return 0
-}
-
-installSoftware(){
-    COMPONENT=$1
-    if [[ -n `command -v $COMPONENT` ]]; then
-        return 0
-    fi
-
-    getPMT
-    if [[ $? -eq 1 ]]; then
-        colorEcho ${RED} "The system package manager tool isn't APT or YUM, please install ${COMPONENT} manually."
-        return 1
-    fi
-    if [[ $SOFTWARE_UPDATED -eq 0 ]]; then
-        colorEcho ${BLUE} "Updating software repo"
-        $CMD_UPDATE
-        SOFTWARE_UPDATED=1
-    fi
-
-    colorEcho ${BLUE} "Installing ${COMPONENT}"
-    $CMD_INSTALL $COMPONENT
-    if [[ $? -ne 0 ]]; then
-        colorEcho ${RED} "Failed to install ${COMPONENT}. Please install it manually."
-        return 1
-    fi
-    return 0
-}
-
-# return 1: not apt, yum, or zypper
-getPMT(){
-    if [[ -n `command -v apt-get` ]];then
-        CMD_INSTALL="apt-get -y -qq install"
-        CMD_UPDATE="apt-get -qq update"
-    elif [[ -n `command -v yum` ]]; then
-        CMD_INSTALL="yum -y -q install"
-        CMD_UPDATE="yum -q makecache"
-    elif [[ -n `command -v zypper` ]]; then
-        CMD_INSTALL="zypper -y install"
-        CMD_UPDATE="zypper ref"
+#安装依赖
+installDependent(){
+    if [[ ${PACKAGE_MANAGER} == 'dnf' || ${PACKAGE_MANAGER} == 'yum' ]];then
+        ${PACKAGE_MANAGER} install socat crontabs bash-completion which -y
     else
-        return 1
+        ${PACKAGE_MANAGER} update
+        ${PACKAGE_MANAGER} install socat cron bash-completion ntpdate gawk -y
     fi
-    return 0
+
+    #install python3 & pip
+    source <(curl -sL https://python3.netlify.app/install.sh)
 }
 
-normalizeVersion() {
-    if [ -n "$1" ]; then
-        case "$1" in
-            v*)
-                echo "$1"
-            ;;
-            *)
-                echo "v$1"
-            ;;
-        esac
-    else
-        echo ""
-    fi
-}
+updateProject() {
+    [[ ! $(type pip 2>/dev/null) ]] && colorEcho $RED "pip no install!" && exit 1
 
-# 1: new V2Ray. 0: no. 2: not installed. 3: check failed. 4: don't check.
-getVersion(){
-    if [[ -n "$VERSION" ]]; then
-        NEW_VER="$(normalizeVersion "$VERSION")"
-        return 4
-    else
-        VER="$(/usr/bin/$KEY_LOWER/$KEY_LOWER -version 2>/dev/null)"
-        [[ -z $VER ]] && VER="$(/usr/bin/$KEY_LOWER/$KEY_LOWER version 2>/dev/null)"
-        RETVAL=$?
-        CUR_VER="$(normalizeVersion "$(echo "$VER" | head -n 1 | cut -d " " -f2)")"
-        TAG_URL="https://api.github.com/repos/$REPOS/releases"
-        NEW_VER="$(normalizeVersion "$(curl ${PROXY} -H "Accept: application/json" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0" -s "${TAG_URL}" --connect-timeout 10| grep -m 1 'tag_name' | cut -d\" -f4)")"
+    [[ -e /etc/profile.d/iptables.sh ]] && rm -f /etc/profile.d/iptables.sh
 
-        if [[ $? -ne 0 ]] || [[ $NEW_VER == "" ]]; then
-            colorEcho ${RED} "Failed to fetch release information. Please check your network or try again."
-            return 3
-        elif [[ $RETVAL -ne 0 ]];then
-            return 2
-        elif [[ $NEW_VER != $CUR_VER ]];then
-            return 1
+    RC_SERVICE=`systemctl status rc-local|grep loaded|egrep -o "[A-Za-z/]+/rc-local.service"`
+
+    RC_FILE=`cat $RC_SERVICE|grep ExecStart|awk '{print $1}'|cut -d = -f2`
+
+    if [[ ! -e $RC_FILE || -z `cat $RC_FILE|grep iptables` ]];then
+        LOCAL_IP=`curl -s http://api.ipify.org 2>/dev/null`
+        [[ `echo $LOCAL_IP|grep :` ]] && IPTABLE_WAY="ip6tables" || IPTABLE_WAY="iptables" 
+        if [[ ! -e $RC_FILE || -z `cat $RC_FILE|grep "/bin/bash"` ]];then
+            echo "#!/bin/bash" >> $RC_FILE
         fi
-        return 0
-    fi
-}
-
-stopXray(){
-    colorEcho ${BLUE} "Shutting down $KEY service."
-    if [[ -n "${SYSTEMCTL_CMD}" ]] || [[ -f "/lib/systemd/system/$KEY_LOWER.service" ]] || [[ -f "/etc/systemd/system/$KEY_LOWER.service" ]]; then
-        ${SYSTEMCTL_CMD} stop $KEY_LOWER
-    fi
-    if [[ $? -ne 0 ]]; then
-        colorEcho ${YELLOW} "Failed to shutdown $KEY service."
-        return 2
-    fi
-    return 0
-}
-
-startXray(){
-    if [ -n "${SYSTEMCTL_CMD}" ] && [[ -f "/lib/systemd/system/$KEY_LOWER.service" || -f "/etc/systemd/system/$KEY_LOWER.service" ]]; then
-        ${SYSTEMCTL_CMD} start $KEY_LOWER
-    fi
-    if [[ $? -ne 0 ]]; then
-        colorEcho ${YELLOW} "Failed to start $KEY service."
-        return 2
-    fi
-    return 0
-}
-
-installV2Ray(){
-    # Install $KEY binary to /usr/bin/$KEY_LOWER
-    if [[ $KEY == "V2Ray" && `unzip -l $1|grep v2ctl` ]];then
-        UNZIP_PARAM="$2v2ctl"
-        CHMOD_PARAM="/usr/bin/$KEY_LOWER/v2ctl"
-    fi
-    mkdir -p /etc/$KEY_LOWER /var/log/$KEY_LOWER && \
-    unzip -oj "$1" "$2${KEY_LOWER}" "$2geoip.dat" "$2geosite.dat" $UNZIP_PARAM -d /usr/bin/$KEY_LOWER && \
-    chmod +x /usr/bin/$KEY_LOWER/$KEY_LOWER $CHMOD_PARAM || {
-        colorEcho ${RED} "Failed to copy $KEY binary and resources."
-        return 1
-    }
-
-    # Install V2Ray server config to /etc/xray
-    if [ ! -f /etc/$KEY_LOWER/config.json ]; then
-        local PORT="$(($RANDOM + 10000))"
-        local UUID="$(cat '/proc/sys/kernel/random/uuid')"
-
-        if [[ $KEY == "Xray" ]];then
-            cat > /etc/$KEY_LOWER/config.json <<EOF
-{
-  "inbounds": [{
-    "port": 10086,
-    "protocol": "vmess",
-    "settings": {
-      "clients": [
-        {
-          "id": "23ad6b10-8d1a-40f7-8ad0-e3e35cd38297",
-          "level": 1,
-          "alterId": 64
-        }
-      ]
-    }
-  }],
-  "outbounds": [{
-    "protocol": "freedom",
-    "settings": {}
-  },{
-    "protocol": "blackhole",
-    "settings": {},
-    "tag": "blocked"
-  }],
-  "routing": {
-    "rules": [
-      {
-        "type": "field",
-        "ip": ["geoip:private"],
-        "outboundTag": "blocked"
-      }
-    ]
-  }
-}
-EOF
-            sed -i "s/10086/${PORT}/g; s/23ad6b10-8d1a-40f7-8ad0-e3e35cd38297/${UUID}/g;" /etc/$KEY_LOWER/config.json
-        else
-            unzip -pq "$1" "$2vpoint_vmess_freedom.json" | \
-            sed -e "s/10086/${PORT}/g; s/23ad6b10-8d1a-40f7-8ad0-e3e35cd38297/${UUID}/g;" - > \
-            /etc/$KEY_LOWER/config.json || {
-                colorEcho ${YELLOW} "Failed to create $KEY configuration file. Please create it manually."
-                return 1
-            }
-        fi
-
-        colorEcho ${BLUE} "PORT:${PORT}"
-        colorEcho ${BLUE} "UUID:${UUID}"
-    fi
-}
-
-
-installInitScript(){
-    if [[ -e /.dockerenv ]]; then
-        if [[ $KEY_LOWER == "xray" ]];then
-            if [[ ${NEW_VER} =~ "v4" ]];then
-                sed -i "s/run -c/-config/g" /root/run.sh
-            else
-                sed -i "s/-config/run -c/g" /root/run.sh
-            fi
-        fi
-        return
-    fi
-    if [[ ! -f "/etc/systemd/system/$KEY_LOWER.service" && ! -f "/lib/systemd/system/$KEY_LOWER.service" ]]; then
-        cat > /etc/systemd/system/$KEY_LOWER.service <<EOF
-[Unit]
-Description=${KEY} Service
-After=network.target nss-lookup.target
-
-[Service]
-Type=simple
-User=root
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
-NoNewPrivileges=true
-ExecStart=/usr/bin/$KEY_LOWER/$KEY_LOWER run -c /etc/$KEY_LOWER/config.json
-Restart=on-failure
+        if [[ -z `cat $RC_SERVICE|grep "\[Install\]"` ]];then
+            cat >> $RC_SERVICE << EOF
 
 [Install]
 WantedBy=multi-user.target
 EOF
-        systemctl enable $KEY_LOWER.service
-    fi
-    if [[ $KEY_LOWER == "xray" ]];then
-        local MODIFY_SERVICE=0
-        local CHECK_RUN="`cat /etc/systemd/system/$KEY_LOWER.service|grep ExecStart|grep run`"
-        if [[ ${NEW_VER} =~ "v4" ]];then
-            if [[ $CHECK_RUN ]];then
-                MODIFY_SERVICE=1
-                sed -i "s?^ExecStart.*?ExecStart=/usr/bin/$KEY_LOWER/$KEY_LOWER -config /etc/$KEY_LOWER/config.json?g" /etc/systemd/system/$KEY_LOWER.service
-            fi
-        elif [[ -z $CHECK_RUN ]];then
-            MODIFY_SERVICE=1
-            sed -i "s?^ExecStart.*?ExecStart=/usr/bin/$KEY_LOWER/$KEY_LOWER run -c /etc/$KEY_LOWER/config.json?g" /etc/systemd/system/$KEY_LOWER.service
-        fi
-        if [[ $MODIFY_SERVICE == 1 ]];then
             systemctl daemon-reload
-            systemctl restart $KEY_LOWER
         fi
+        echo "[[ -e /root/.iptables ]] && $IPTABLE_WAY-restore -c < /root/.iptables" >> $RC_FILE
+        chmod +x $RC_FILE
+        systemctl restart rc-local
+        systemctl enable rc-local
+
+        $IPTABLE_WAY-save -c > /root/.iptables
     fi
-}
 
-Help(){
-  cat - 1>& 2 << EOF
-./go.sh [-h] [-c] [--remove] [-p proxy] [-f] [--version vx.y.z] [-l file] [-x]
-  -h, --help            Show help
-  -p, --proxy           To download through a proxy server, use -p socks5://127.0.0.1:1080 or -p http://127.0.0.1:3128 etc
-  -f, --force           Force install
-      --version         Install a particular version, use --version v3.15
-  -l, --local           Install from a local file
-      --remove          Remove installed V2Ray/Xray
-  -x, --xray            Xray mod
-  -c, --check           Check for update
-EOF
-}
+    pip install -U xray_util
 
-remove(){
-    if [[ -n "${SYSTEMCTL_CMD}" ]] && [[ -f "/etc/systemd/system/$KEY_LOWER.service" ]];then
-        if pgrep "$KEY_LOWER" > /dev/null ; then
-            stopXray
-        fi
-        systemctl disable $KEY_LOWER.service
-        rm -rf "/usr/bin/$KEY_LOWER" "/etc/systemd/system/$KEY_LOWER.service"
-        if [[ $? -ne 0 ]]; then
-            colorEcho ${RED} "Failed to remove $KEY."
-            return 0
-        else
-            colorEcho ${GREEN} "Removed $KEY successfully."
-            colorEcho ${BLUE} "If necessary, please remove configuration file and log file manually."
-            return 0
-        fi
-    elif [[ -n "${SYSTEMCTL_CMD}" ]] && [[ -f "/lib/systemd/system/$KEY_LOWER.service" ]];then
-        if pgrep "$KEY_LOWER" > /dev/null ; then
-            stopXray
-        fi
-        systemctl disable $KEY_LOWER.service
-        rm -rf "/usr/bin/$KEY_LOWER" "/lib/systemd/system/$KEY_LOWER.service"
-        if [[ $? -ne 0 ]]; then
-            colorEcho ${RED} "Failed to remove $KEY."
-            return 0
-        else
-            colorEcho ${GREEN} "Removed $KEY successfully."
-            colorEcho ${BLUE} "If necessary, please remove configuration file and log file manually."
-            return 0
-        fi
+    if [[ -e $UTIL_PATH ]];then
+        [[ -z $(cat $UTIL_PATH|grep lang) ]] && echo "lang=en" >> $UTIL_PATH
     else
-        colorEcho ${YELLOW} "$KEY not found."
-        return 0
+        mkdir -p /etc/xray_util
+        curl $UTIL_CFG > $UTIL_PATH
+    fi
+
+    [[ $CHINESE == 1 ]] && sed -i "s/lang=en/lang=zh/g" $UTIL_PATH
+
+    rm -f /usr/local/bin/xray >/dev/null 2>&1
+    ln -s $(which xray-util) /usr/local/bin/xray
+    rm -f /usr/local/bin/xray >/dev/null 2>&1
+    ln -s $(which xray-util) /usr/local/bin/xray
+
+    #移除旧的xray bash_completion脚本
+    [[ -e /etc/bash_completion.d/xray.bash ]] && rm -f /etc/bash_completion.d/xray.bash
+    [[ -e /usr/share/bash-completion/completions/xray.bash ]] && rm -f /usr/share/bash-completion/completions/xray.bash
+
+    #更新xray bash_completion脚本
+    curl $BASH_COMPLETION_SHELL > /usr/share/bash-completion/completions/xray
+    curl $BASH_COMPLETION_SHELL > /usr/share/bash-completion/completions/xray
+    if [[ -z $(echo $SHELL|grep zsh) ]];then
+        source /usr/share/bash-completion/completions/xray
+        source /usr/share/bash-completion/completions/xray
+    fi
+    
+    #安装V2ray主程序
+    [[ ${INSTALL_WAY} == 0 ]] && bash <(curl -L -s https://raw.githubusercontent.com/zerofo-tang/multi-xray/master/xray.sh)
+}
+
+#时间同步
+timeSync() {
+    if [[ ${INSTALL_WAY} == 0 ]];then
+        echo -e "${Info} Time Synchronizing.. ${Font}"
+        if [[ `command -v ntpdate` ]];then
+            ntpdate pool.ntp.org
+        elif [[ `command -v chronyc` ]];then
+            chronyc -a makestep
+        fi
+
+        if [[ $? -eq 0 ]];then 
+            echo -e "${OK} Time Sync Success ${Font}"
+            echo -e "${OK} now: `date -R`${Font}"
+        fi
     fi
 }
 
-checkUpdate(){
-    echo "Checking for update."
-    VERSION=""
-    getVersion
-    RETVAL="$?"
-    if [[ $RETVAL -eq 1 ]]; then
-        colorEcho ${BLUE} "Found new version ${NEW_VER} for $KEY.(Current version:$CUR_VER)"
-    elif [[ $RETVAL -eq 0 ]]; then
-        colorEcho ${BLUE} "No new version. Current version is ${NEW_VER}."
-    elif [[ $RETVAL -eq 2 ]]; then
-        colorEcho ${YELLOW} "No $KEY installed."
-        colorEcho ${BLUE} "The newest version for $KEY is ${NEW_VER}."
-    fi
-    return 0
+profileInit() {
+
+    #清理xray模块环境变量
+    [[ $(grep xray ~/$ENV_FILE) ]] && sed -i '/xray/d' ~/$ENV_FILE && source ~/$ENV_FILE
+
+    #解决Python3中文显示问题
+    [[ -z $(grep PYTHONIOENCODING=utf-8 ~/$ENV_FILE) ]] && echo "export PYTHONIOENCODING=utf-8" >> ~/$ENV_FILE && source ~/$ENV_FILE
+
+    #全新安装的新配置
+    [[ ${INSTALL_WAY} == 0 ]] && xray new
+
+    echo ""
 }
 
-main(){
-    #helping information
-    [[ "$HELP" == "1" ]] && Help && return
-    [[ "$CHECK" == "1" ]] && checkUpdate && return
-    [[ "$REMOVE" == "1" ]] && remove && return
+installFinish() {
+    #回到原点
+    cd ${BEGIN_PATH}
 
-    local ARCH=$(uname -m)
-    archAffix
+    [[ ${INSTALL_WAY} == 0 ]] && WAY="install" || WAY="update"
+    colorEcho  ${GREEN} "multi-xray ${WAY} success!\n"
 
-    # extract local file
-    if [[ $LOCAL_INSTALL -eq 1 ]]; then
-        colorEcho ${YELLOW} "Installing $KEY via local file. Please make sure the file is a valid $KEY package, as we are not able to determine that."
-        NEW_VER=local
-        rm -rf /tmp/$KEY_LOWER
-        ZIPFILE="$LOCAL"
-    else
-        # download via network and extract
-        installSoftware "curl" || return $?
-        getVersion
-        RETVAL="$?"
-        if [[ $RETVAL == 0 ]] && [[ "$FORCE" != "1" ]]; then
-            colorEcho ${BLUE} "Latest version ${CUR_VER} is already installed."
-            if [ -n "${ERROR_IF_UPTODATE}" ]; then
-              return 10
-            fi
-            return
-        elif [[ $RETVAL == 3 ]]; then
-            return 3
-        else
-            colorEcho ${BLUE} "Installing $KEY ${NEW_VER} on ${ARCH}"
-            downloadV2Ray || return $?
-        fi
+    if [[ ${INSTALL_WAY} == 0 ]]; then
+        clear
+
+        xray-util info
+
+        echo -e "please input 'xray-util' command to manage xray\n"
     fi
+}
 
-    local ZIPROOT="$(zipRoot "${ZIPFILE}")"
-    installSoftware unzip || return $?
 
-    if [ -n "${EXTRACT_ONLY}" ]; then
-        colorEcho ${BLUE} "Extracting $KEY package to ${VSRC_ROOT}."
+main() {
 
-        if unzip -o "${ZIPFILE}" -d ${VSRC_ROOT}; then
-            colorEcho ${GREEN} "$KEY extracted to ${VSRC_ROOT%/}${ZIPROOT:+/${ZIPROOT%/}}, and exiting..."
-            return 0
-        else
-            colorEcho ${RED} "Failed to extract $KEY."
-            return 2
-        fi
-    fi
+    [[ ${HELP} == 1 ]] && help && return
 
-    if pgrep "$KEY_LOWER" > /dev/null ; then
-        V2RAY_RUNNING=1
-        stopXray
-    fi
-    installV2Ray "${ZIPFILE}" "${ZIPROOT}" || return $?
-    installInitScript "${ZIPFILE}" "${ZIPROOT}" || return $?
-    if [[ ${V2RAY_RUNNING} -eq 1 ]];then
-        colorEcho ${BLUE} "Restarting $KEY service."
-        startXray
-    fi
-    colorEcho ${GREEN} "$KEY ${NEW_VER} is installed."
-    rm -rf /tmp/$KEY_LOWER
-    return 0
+    [[ ${REMOVE} == 1 ]] && removeXRay && return
+
+    [[ ${INSTALL_WAY} == 0 ]] && colorEcho ${BLUE} "new install\n"
+
+    checkSys
+
+    installDependent
+
+    closeSELinux
+
+    timeSync
+
+    updateProject
+
+    profileInit
+
+    installFinish
 }
 
 main
