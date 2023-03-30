@@ -80,6 +80,7 @@ class StreamType(Enum):
     VLESS_GRPC = 'vless_grpc'
     VLESS_XTLS = 'vless_xtls'
     TROJAN = 'trojan'
+    VLESS_X_REALITY = "vless_xtls_reality"
 
 def header_type_list():
     return ("none", "srtp", "utp", "wechat-video", "dtls", "wireguard")
@@ -223,7 +224,7 @@ def gen_cert(domain, cert_type, email=""):
 
 def calcul_iptables_traffic(port, ipv6=False):
     network = "1" if ipv6 else ""
-    traffic_result = os.popen("bash {0} {1} {2}".format(pkg_resources.resource_filename("v2ray_util", "global_setting/calcul_traffic.sh"), str(port), network)).readlines()
+    traffic_result = os.popen("bash {0} {1} {2}".format(pkg_resources.resource_filename("xray_util", "global_setting/calcul_traffic.sh"), str(port), network)).readlines()
     if traffic_result:
         traffic_list = traffic_result[0].split()
         upload_traffic = bytes_2_human_readable(int(traffic_list[0]), 2)

@@ -3,7 +3,7 @@
 import socket
 import os
 
-from ..util_core.v2ray import restart, V2ray
+from ..util_core.xray import restart, Xray
 from ..util_core.writer import GroupWriter
 from ..util_core.group import Mtproto, SS
 from ..util_core.selector import GroupSelector
@@ -53,7 +53,7 @@ class TLSModifier:
                     break
 
             print(_("auto generate SSL certificate, please wait.."))
-            V2ray.stop()
+            Xray.stop()
             gen_cert(input_domain, cert_list[int(choice) - 1], input_email)
             crt_file = "/root/.acme.sh/" + input_domain +"_ecc"+ "/fullchain.cer"
             key_file = "/root/.acme.sh/" + input_domain +"_ecc"+ "/"+ input_domain +".key"

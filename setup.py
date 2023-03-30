@@ -2,21 +2,21 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 
-import v2ray_util
+import xray_util
 
 with open("README.md", "r", encoding='UTF-8') as fh:
     long_description = fh.read()
 
 setup(
-    name='v2ray-util',
-    version=v2ray_util.__version__,
-    description="a tool to manage v2ray config json",
+    name='xray-util',
+    version=xray_util.__version__,
+    description="a tool to manage xray config json",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    keywords='python v2ray multi-v2ray vmess socks5 vless trojan xray xtls',
-    author='Jrohy',
-    author_email='euvkzx@gmail.com',
-    url='https://github.com/Jrohy/multi-v2ray',
+    keywords='python multi-xray vmess socks5 vless trojan xray xtls',
+    author='Jrohy and Zerofo',
+    author_email='emptytaboo@gmail.com',
+    url='https://github.com/Zerofo/multi-x2ray',
     license='GPL',
     packages=find_packages(),
     include_package_data=True,
@@ -24,7 +24,7 @@ setup(
     python_requires='>=3',
     entry_points={
         'console_scripts': [
-            'v2ray-util = v2ray_util.main:menu'
+            'xray-util = xray_util.main:menu'
         ]
     },
     classifiers=[
@@ -44,3 +44,4 @@ setup(
         'Programming Language :: Python :: 3.11',
     ]
 )
+print("使用 xray-util 命令执行")

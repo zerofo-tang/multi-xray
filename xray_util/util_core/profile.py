@@ -3,7 +3,7 @@
 import json
 import os
 
-from v2ray_util import run_type
+from xray_util import run_type
 from .config import Config
 from .utils import ColorStr, get_ip
 from .group import SS, Socks, Vmess, Vless, Mtproto, Quic, Group, Dyport, Trojan
@@ -169,8 +169,20 @@ class Profile:
                 node = Mtproto(self.user_number, client["secret"], user_info=email)
 
             elif protocol == "vless":
-                if tls == "xtls":
+                if client["flow"] is not None:
                     flow = client["flow"]
+                if tls == "reality":
+                    realitySet = conf_stream['realitySettings']       
+                    pkey = ""
+                    if os.path.exists("/etc/"+run_type+"/reality.key"):
+                     with open("/etc/"+run_type+"/reality.key", "r") as f:
+                        for line in f:
+                            if realitySet['privateKey'] in line :
+                                pkey = line.rstrip().split()[-1]
+                    node = Vless(client["id"], self.user_number, conf_settings["decryption"], email, conf_stream["network"], path, host, header, flow, serviceName, mode,\
+                             security=conf_stream['security'], dest=realitySet['dest'], shortIds=realitySet['shortIds'], serverName=realitySet['serverNames'], pkey=pkey)
+                    group.node_list.append(node)
+                    return group
                 node = Vless(client["id"], self.user_number, conf_settings["decryption"], email, conf_stream["network"], path, host, header, flow, serviceName, mode)
 
             elif protocol == "trojan":

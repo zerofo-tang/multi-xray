@@ -3,7 +3,7 @@
 import socket
 
 from .tls import TLSModifier
-from ..util_core.v2ray import restart
+from ..util_core.xray import restart
 from ..util_core.loader import Loader
 from ..util_core.writer import StreamWriter, NodeWriter
 from ..util_core.utils import StreamType, ColorStr, get_ip, loop_input_choice_number, check_ip, is_ipv4, port_is_use

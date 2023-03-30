@@ -7,5 +7,6 @@
   "wsSettings": {},
   "httpSettings": {},
   "quicSettings": {},
-  "grpcSettings": {}
+  "grpcSettings": {},
+  "realitySettings": {}
 }

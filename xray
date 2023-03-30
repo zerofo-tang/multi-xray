@@ -10,8 +10,6 @@ function _auto_tab() {
 	prev="${COMP_WORDS[COMP_CWORD-1]}"
 
 	case $prev in
-		'v2ray')
-			COMPREPLY=( $(compgen -W "${options_array[*]}" -- $cur) ) ;;
 		'xray')
 			COMPREPLY=( $(compgen -W "${options_array[*]}" -- $cur) ) ;;
 		'add')
@@ -28,4 +26,4 @@ function _auto_tab() {
 
 	return 0
 }
-complete -F _auto_tab v2ray xray
+complete -F _auto_tab xray

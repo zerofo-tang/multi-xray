@@ -19,6 +19,7 @@
     "streamSettings": {
       "security": "none",
       "tlsSettings": {},
+      "realitySettings": {},
       "wsSettings": {},
       "httpSettings": {},
       "network": "",

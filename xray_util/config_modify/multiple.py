@@ -3,7 +3,7 @@
 import random
 import string
 
-from ..util_core.v2ray import restart
+from ..util_core.xray import restart
 from ..util_core.loader import Loader
 from ..util_core.writer import NodeWriter
 from ..util_core.group import Vmess, Socks, Mtproto, SS, Vless, Trojan

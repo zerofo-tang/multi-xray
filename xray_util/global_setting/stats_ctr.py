@@ -4,8 +4,8 @@ import os
 import re
 import subprocess
 
-from v2ray_util import run_type
-from ..util_core.v2ray import V2ray
+from xray_util import run_type
+from ..util_core.xray import Xray
 from ..util_core.loader import Loader
 from ..util_core.writer import GlobalWriter
 from ..util_core.utils import bytes_2_human_readable, ColorStr, readchar
@@ -33,8 +33,7 @@ class StatsFactory:
             if is_reset == "true":
                 stats_cmd = stats_cmd + " -reset"
         else:
-            stats_cmd = "cd /usr/bin/v2ray && ./v2ctl api --server=127.0.0.1:{} StatsService.GetStats 'name: \"{}>>>{}>>>traffic>>>{}\"" + " reset: {}'".format(is_reset)
-
+            print("error")
         stats_real_cmd = stats_cmd.format(str(self.door_port), type_tag, meta_info, "downlink")
         self.downlink_value = self.__run_command(stats_real_cmd)
 
@@ -60,7 +59,7 @@ total: {2}
 
 def manage(stat_type=''):
 
-    FIND_V2RAY_CRONTAB_CMD = "crontab -l|grep {}".format(run_type)
+    FIND_XRAY_CRONTAB_CMD = "crontab -l|grep {}".format(run_type)
 
     DEL_UPDATE_TIMER_CMD = "crontab -l|sed '/SHELL=/d;/{}/d' > crontab.txt && crontab crontab.txt >/dev/null 2>&1 && rm -f crontab.txt >/dev/null 2>&1".format(run_type)
 
@@ -103,24 +102,24 @@ def manage(stat_type=''):
                 continue
 
         if choice == "1":
-            if os.popen(FIND_V2RAY_CRONTAB_CMD).readlines():
+            if os.popen(FIND_XRAY_CRONTAB_CMD).readlines():
                 rchoice = readchar(_("open traffic statistics will close schedule update {}, continue?(y/n): ".format(run_type)))
                 if rchoice == "y" or rchoice == "Y":
-                    #关闭定时更新v2ray服务
+                    #关闭定时更新xray服务
                     os.system(DEL_UPDATE_TIMER_CMD)
                 else:
                     print(_("undo open traffic statistics!!"))
                     continue
             gw = GlobalWriter(group_list)
             gw.write_stats(True)
-            V2ray.restart()
+            Xray.restart()
             print(_("open traffic statistics success!"))
             print("")
             
         elif choice == "2":
             gw = GlobalWriter(group_list)
             gw.write_stats(False)
-            V2ray.restart()
+            Xray.restart()
             print(_("close traffic statistics success!"))
             print("")
 

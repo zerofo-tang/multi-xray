@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 import random
 import string
-
-from v2ray_util import run_type
-from ..util_core.v2ray import restart
+import os
+from xray_util import run_type
+from ..util_core.xray import restart
 from ..util_core.writer import StreamWriter, GroupWriter
 from ..util_core.selector import GroupSelector, CommonSelector
 from ..util_core.utils import StreamType, header_type_list, ColorStr, all_port, xtls_flow, readchar
@@ -40,6 +40,7 @@ class StreamModifier:
             (StreamType.VLESS_WS, "VLESS_WS"),
             (StreamType.VLESS_XTLS, "VLESS_XTLS"),
             (StreamType.VLESS_GRPC, "VLESS_GRPC"),
+            (StreamType.VLESS_X_REALITY, "VLESS_XTLS_REALITY"),
             (StreamType.TROJAN, "Trojan"),
         ]
         self.group_tag = group_tag
@@ -75,7 +76,7 @@ class StreamModifier:
             print("")
             header = CommonSelector(header_type_list(), _("please select fake header: ")).select()
             kw = {'security': security, 'key': key, 'header': header}
-        elif sType in (StreamType.VLESS_TLS, StreamType.VLESS_WS, StreamType.VLESS_XTLS, StreamType.VLESS_GRPC):
+        elif sType in (StreamType.VLESS_TLS, StreamType.VLESS_WS, StreamType.VLESS_XTLS, StreamType.VLESS_GRPC, StreamType.VLESS_X_REALITY):
             port_set = all_port()
             if not "443" in port_set:
                 print()
@@ -95,7 +96,22 @@ class StreamModifier:
                 choice = readchar(_("open xray grpc multiMode?(y/n): ")).lower()
                 if choice == 'y':
                     kw = {'mode': 'multi'}
-        
+            #elif sType == StreamType.VLESS_X_REALITY and run_type == "xray":
+            elif sType == StreamType.VLESS_X_REALITY:
+                #prikey = input(_("please input private key by command '/usr/bin/xray/xray x25519' and key your pubic key: "))
+                keys = os.popen("/usr/bin/xray/xray x25519")
+                if not os.path.exists("/etc/xray"):
+                    os.makedirs("/etc/xray")
+                key = []
+                with open("/etc/xray/reality.key", "a") as f:
+                    data = ""
+                    for line in keys.readlines():
+                        key.append(line.split(' ')[-1].rstrip())
+                        data += line.replace('\n', ' ')
+                    f.write(data.rstrip())
+                serName = input(_("please input SerName for reality:"))
+                kw = {'flow': 'xtls-rprx-vision', 'security': 'reality', 'privateKey':key[0], 'serverName': serName}
+
         elif sType == StreamType.GRPC:
             choice = readchar(_("open xray grpc multiMode?(y/n): ")).lower()
             if choice == 'y':

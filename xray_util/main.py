@@ -4,8 +4,8 @@ import os
 import sys
 import subprocess
 
-from v2ray_util import run_type
-from .util_core.v2ray import V2ray
+from xray_util import run_type
+from .util_core.xray import Xray
 from .util_core.utils import ColorStr, open_port, loop_input_choice_number
 from .global_setting import stats_ctr, iptables_ctr, ban_bt, update_timer
 from .config_modify import base, multiple, ss, stream, tls, cdn
@@ -26,7 +26,7 @@ def help():
     new                  重建新的{bin} json配置文件
     update               更新 {bin} 到最新Release版本
     update [version]     更新 {bin} 到指定版本
-    update.sh            更新 multi-v2ray 到最新版本
+    update.sh            更新 multi-xray 到最新版本
     add                  新增端口组
     add [protocol]       新增一种协议的组, 端口随机, 如 {bin} add utp 为新增utp协议
     del                  删除端口组
@@ -54,7 +54,7 @@ def help():
     new                  create new json profile
     update               update {bin} to latest
     update [version]     update {bin} to special version
-    update.sh            update multi-v2ray to latest
+    update.sh            update multi-xray to latest
     add                  add new group
     add [protocol]       create special protocol, random new port
     del                  delete port group
@@ -73,7 +73,7 @@ def help():
 
 def updateSh():
     if os.path.exists("/.dockerenv"):
-        subprocess.Popen("pip install -U v2ray_util", shell=True).wait()
+        subprocess.Popen("pip install -U xray_util", shell=True).wait()
     else:
         subprocess.Popen("curl -Ls https://multi.netlify.app/v2ray.sh -o temp.sh", shell=True).wait()
         subprocess.Popen("bash temp.sh -k && rm -f temp.sh", shell=True).wait()
@@ -83,19 +83,19 @@ def parse_arg():
         return
     elif len(sys.argv) == 2:
         if sys.argv[1] == "start":
-            V2ray.start()
+            Xray.start()
         elif sys.argv[1] == "stop":
-            V2ray.stop()
+            Xray.stop()
         elif sys.argv[1] == "restart":
-            V2ray.restart()
+            Xray.restart()
         elif sys.argv[1] in ("-h", "help"):
             help()
         elif sys.argv[1] in ("-v", "version"):
-            V2ray.version()
+            Xray.version()
         elif sys.argv[1] == "status":
-            V2ray.status()
+            Xray.status()
         elif sys.argv[1] == "info":
-            V2ray.info()
+            Xray.info()
         elif sys.argv[1] == "port":
             base.port()
         elif sys.argv[1] == "tls":
@@ -109,37 +109,37 @@ def parse_arg():
         elif sys.argv[1] == "iptables":
             iptables_ctr.manage()
         elif sys.argv[1] == "clean":
-            V2ray.cleanLog()
+            Xray.cleanLog()
         elif sys.argv[1] == "del":
             multiple.del_port()
         elif sys.argv[1] == "add":
             multiple.new_port()
         elif sys.argv[1] == "update":
-            V2ray.update()
+            Xray.update()
         elif sys.argv[1] == "update.sh":
             updateSh()
         elif sys.argv[1] == "new":
-            V2ray.new()
+            Xray.new()
         elif sys.argv[1] == "log":
-            V2ray.log()
+            Xray.log()
         elif sys.argv[1] == "cdn":
             cdn.modify()
         elif sys.argv[1] == "rm":
-            V2ray.remove()
+            Xray.remove()
     else:
         if sys.argv[1] == "add":
             multiple.new_port(sys.argv[2])
         elif sys.argv[1] == "update":
-            V2ray.update(sys.argv[2])
+            Xray.update(sys.argv[2])
         elif sys.argv[1] == "iptables":
             iptables_ctr.manage(sys.argv[2])
         elif sys.argv[1] == "stats":
             stats_ctr.manage(sys.argv[2])
         elif sys.argv[1] == "log":
             if sys.argv[2] in ("error", "e"):
-                V2ray.log(True)
+                Xray.log(True)
             elif sys.argv[2] in ("access", "a"):
-                V2ray.log()
+                Xray.log()
     sys.exit(0)
 
 def service_manage():
@@ -149,15 +149,15 @@ def service_manage():
         print("{}.{}".format(index + 1, text))
     choice = loop_input_choice_number(_("please select: "), len(show_text))
     if choice == 1:
-        V2ray.start()
+        Xray.start()
     elif choice == 2:
-        V2ray.stop()
+        Xray.stop()
     elif choice == 3:
-        V2ray.restart()
+        Xray.restart()
     elif choice == 4:
-        V2ray.status()
+        Xray.status()
     elif choice == 5:
-        V2ray.log()
+        Xray.log()
 
 def user_manage():
     show_text = (_("add user"), _("add port"), _("del user"), _("del port"))
@@ -224,7 +224,7 @@ def global_setting():
     elif choice == 4:
         update_timer.manage()
     elif choice == 5:
-        V2ray.cleanLog()
+        Xray.cleanLog()
     elif choice == 6:
         from .util_core.config import Config
         config = Config()
@@ -234,7 +234,7 @@ def global_setting():
         sys.exit(0)
 
 def menu():
-    V2ray.check()
+    Xray.check()
     parse_arg()
     while True:
         print("")
@@ -256,11 +256,11 @@ def menu():
         elif choice == 3:
             profile_alter()
         elif choice == 4:
-            V2ray.info()
+            Xray.info()
         elif choice == 5:
             global_setting()
         elif choice == 6:
-            V2ray.update()
+            Xray.update()
         elif choice == 7:
             from .util_core import client
             client.generate()

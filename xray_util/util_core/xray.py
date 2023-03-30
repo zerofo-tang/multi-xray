@@ -7,12 +7,12 @@ import time
 import subprocess
 import pkg_resources
 from functools import wraps
-from v2ray_util import run_type
+from xray_util import run_type
 from .utils import ColorStr, open_port, get_ip, is_ipv6, random_port
 
 def restart(port_open=False):
     """
-    运行函数/方法后重启v2ray的装饰器
+    运行函数/方法后重启xray的装饰器
     """  
     def decorate(func):
         @wraps(func)
@@ -21,18 +21,18 @@ def restart(port_open=False):
             if port_open:
                 open_port()
             if result:
-                V2ray.restart()
+                Xray.restart()
         return wrapper
     return decorate
 
-class V2ray:
+class Xray:
 
     @staticmethod
     def docker_run(command, keyword):
         subprocess.run(command, shell=True)
         print("{}ing {}...".format(keyword, run_type))
         time.sleep(1)
-        if V2ray.docker_status() or keyword == "stop":
+        if Xray.docker_status() or keyword == "stop":
             print(ColorStr.green("{} {} success !".format(run_type, keyword)))
         else:
             print(ColorStr.red("{} {} fail !".format(run_type, keyword)))
@@ -62,7 +62,7 @@ class V2ray:
     @staticmethod
     def status():
         if os.path.exists("/.dockerenv"):
-            if V2ray.docker_status():
+            if Xray.docker_status():
                 print(ColorStr.green("{} running..".format(run_type)))
             else:
                 print(bytes.decode(subprocess.run('cat /.run.log', shell=True, stdout=subprocess.PIPE).stdout))
@@ -72,12 +72,10 @@ class V2ray:
 
     @staticmethod
     def version():
-        v2ray_version = bytes.decode(subprocess.check_output("/usr/bin/{bin}/{bin}".format(bin=run_type) + " -version 2>/dev/null | head -n 1 | awk '{print $2}'", shell=True))
-        if not v2ray_version:
-            v2ray_version = bytes.decode(subprocess.check_output("/usr/bin/{bin}/{bin}".format(bin=run_type) + " version 2>/dev/null | head -n 1 | awk '{print $2}'", shell=True))
-        import v2ray_util
-        print("{}: {}".format(run_type, ColorStr.green(v2ray_version)))
-        print("v2ray_util: {}".format(ColorStr.green(v2ray_util.__version__)))    
+        xray_version = bytes.decode(subprocess.check_output("/usr/bin/{bin}/{bin}".format(bin=run_type) + " version 2>/dev/null | head -n 1 | awk '{print $2}'", shell=True))
+        import xray_util
+        print("{}: {}".format(run_type, ColorStr.green(xray_version)))
+        print("xray_util: {}".format(ColorStr.green(xray_util.__version__)))    
 
     @staticmethod
     def info():
@@ -90,15 +88,15 @@ class V2ray:
             print(ColorStr.yellow(_("ipv6 network not support update {soft} online, please manual donwload {soft} to update!".format(soft=run_type))))
             if run_type == "xray":
                 print(ColorStr.fuchsia(_("download Xray-linux-xx.zip and run 'bash <(curl -L -s https://multi.netlify.app/go.sh) -l Xray-linux-xx.zip -x' to update")))
-            else:
-                print(ColorStr.fuchsia(_("download v2ray-linux-xx.zip and run 'bash <(curl -L -s https://multi.netlify.app/go.sh) -l v2ray-linux-xx.zip' to update")))
             sys.exit(0)
         if os.path.exists("/.dockerenv"):
-            V2ray.stop()
+            Xray.stop()
         subprocess.Popen("curl -Ls https://multi.netlify.app/go.sh -o temp.sh", shell=True).wait()
+        subprocess.Popen("sed -i 's/releases\/latest/releases/g' temp.sh", shell=True).wait()
+        subprocess.Popen("sed -i \"s/grep 'tag_name'/grep -m 1 'tag_name'/g\" temp.sh", shell=True).wait()
         subprocess.Popen("bash temp.sh {} {} && rm -f temp.sh".format("-x" if run_type == "xray" else "", "--version {}".format(version) if version else ""), shell=True).wait()
         if os.path.exists("/.dockerenv"):
-            V2ray.start()
+            Xray.start()
 
     @staticmethod
     def cleanLog():
@@ -120,8 +118,8 @@ class V2ray:
     @classmethod
     def restart(cls):
         if os.path.exists("/.dockerenv"):
-            V2ray.stop()
-            V2ray.start()
+            Xray.stop()
+            Xray.start()
         else:
             cls.run("systemctl restart {}".format(run_type), "restart")
 
@@ -145,8 +143,8 @@ class V2ray:
 
     @classmethod
     def check(cls):
-        if not os.path.exists("/etc/v2ray_util/util.cfg"):
-            subprocess.call("mkdir -p /etc/v2ray_util && cp -f {} /etc/v2ray_util/".format(pkg_resources.resource_filename(__name__, 'util.cfg')), shell=True)
+        if not os.path.exists("/etc/xray_util/util.cfg"):
+            subprocess.call("mkdir -p /etc/xray_util && cp -f {} /etc/xray_util/".format(pkg_resources.resource_filename(__name__, 'util.cfg')), shell=True)
         if not os.path.exists("/usr/bin/{bin}/{bin}".format(bin=run_type)):
             print(ColorStr.yellow(_("check {soft} no install, auto install {soft}..".format(soft=run_type))))
             cls.update()
@@ -165,7 +163,7 @@ class V2ray:
 
     @classmethod
     def new(cls):
-        subprocess.call("rm -rf /etc/{soft}/config.json && cp {package_path}/server.json /etc/{soft}/config.json".format(soft=run_type, package_path=pkg_resources.resource_filename('v2ray_util', "json_template")), shell=True)
+        subprocess.call("rm -rf /etc/{soft}/config.json && cp {package_path}/server.json /etc/{soft}/config.json".format(soft=run_type, package_path=pkg_resources.resource_filename('xray_util', "json_template")), shell=True)
         new_uuid = uuid.uuid4()
         print("new UUID: {}".format(ColorStr.green(str(new_uuid))))
         new_port = random_port(1000, 65535)

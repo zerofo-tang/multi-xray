@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from ..util_core.loader import Loader
-from ..util_core.v2ray import restart
+from ..util_core.xray import restart
 from ..util_core.writer import GlobalWriter
 from ..util_core.utils import readchar
 

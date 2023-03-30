@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from v2ray_util import run_type
+from xray_util import run_type
 
-from ..util_core.v2ray import restart
+from ..util_core.xray import restart
 from ..util_core.utils import readchar, random_email, ColorStr
 from ..util_core.group import Vless, Vmess, Socks, Mtproto, SS
 from ..util_core.writer import ClientWriter, GroupWriter

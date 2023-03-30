@@ -98,13 +98,18 @@ class Socks(User):
         return "socks"
 
 class Vless(User):
-    def __init__(self, uuid, user_number, encryption=None, email=None, network=None, path=None, host=None, header=None, flow="", serviceName="", mode=""):
+    def __init__(self, uuid, user_number, encryption=None, email=None, network=None, path=None, host=None, header=None, flow="", serviceName="", mode="", security="", dest="", serverName="", shortIds="", pkey=""):
         super(Vless, self).__init__(user_number, uuid, email)
         self.encryption = encryption
         self.path = path
         self.host = host
         self.header = header
         self.network = network
+        self.security = security
+        self.dest = dest
+        self.serverName = serverName
+        self.shortIds = shortIds
+        self.pkey = pkey
         self.flow = flow
         self.serviceName = serviceName
         self.mode = mode
@@ -138,8 +143,21 @@ Network: {network}
 
     def link(self, ip, port, tls):
         result_link = "vless://{s.password}@{ip}:{port}?encryption={s.encryption}".format(s=self, ip=ip, port=port)
-        if tls == "tls":
+        if self.security == "reality":
+            result_link += "&security=reality&flow={}&pbk={}&sni={}&fp=randomized".format(self.flow, self.pkey, self.serverName[0])
+            if self.shortIds[0] != "":
+                result_link += "&sid={}".format(self.shortIds[0])
+        elif tls == "tls" and self.flow != "":
+            result_link += "&security=xtls&flow={}&fp=randomized".format(self.flow)
+
+        elif tls == "tls":
             result_link += "&security=tls"
+            if self.flow != "":
+                result_link += "&flow={}".format(self.flow)
+            if self.sni != "":
+                result_link += "&sni={}".format(self.serviceName)
+            if self.alpn != "":
+                result_link += "&alpn={}".format("h2%2Chttp%2F1.1")
         elif tls == "xtls":
             result_link += "&security=xtls&flow={}".format(self.flow)
         if self.network == "ws":

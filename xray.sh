@@ -15,7 +15,7 @@ FORCE=''
 CHECK=''
 REMOVE=''
 VERSION=''
-VSRC_ROOT='/tmp/v2ray'
+VSRC_ROOT='/tmp/xray'
 EXTRACT_ONLY=''
 LOCAL=''
 LOCAL_INSTALL=''
@@ -23,15 +23,15 @@ ERROR_IF_UPTODATE=''
 
 CUR_VER=""
 NEW_VER=""
-ZIPFILE="/tmp/v2ray/v2ray.zip"
+ZIPFILE="/tmp/xray/xray.zip"
 V2RAY_RUNNING=0
 
 CMD_INSTALL=""
 CMD_UPDATE=""
 SOFTWARE_UPDATED=0
-KEY="V2Ray"
-KEY_LOWER="v2ray"
-REPOS="v2fly/v2ray-core"
+KEY="XRay"
+KEY_LOWER="xray"
+REPOS="xtls/xray-core"
 
 SYSTEMCTL_CMD=$(command -v systemctl 2>/dev/null)
 
@@ -270,8 +270,8 @@ getVersion(){
         [[ -z $VER ]] && VER="$(/usr/bin/$KEY_LOWER/$KEY_LOWER version 2>/dev/null)"
         RETVAL=$?
         CUR_VER="$(normalizeVersion "$(echo "$VER" | head -n 1 | cut -d " " -f2)")"
-        TAG_URL="https://api.github.com/repos/$REPOS/releases/latest"
-        NEW_VER="$(normalizeVersion "$(curl ${PROXY} -H "Accept: application/json" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0" -s "${TAG_URL}" --connect-timeout 10| grep 'tag_name' | cut -d\" -f4)")"
+        TAG_URL="https://api.github.com/repos/$REPOS/releases"
+        NEW_VER="$(normalizeVersion "$(curl ${PROXY} -H "Accept: application/json" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0" -s "${TAG_URL}" --connect-timeout 10| grep -m 1 'tag_name' | cut -d\" -f4)")"
 
         if [[ $? -ne 0 ]] || [[ $NEW_VER == "" ]]; then
             colorEcho ${RED} "Failed to fetch release information. Please check your network or try again."
@@ -285,7 +285,7 @@ getVersion(){
     fi
 }
 
-stopV2ray(){
+stopXray(){
     colorEcho ${BLUE} "Shutting down $KEY service."
     if [[ -n "${SYSTEMCTL_CMD}" ]] || [[ -f "/lib/systemd/system/$KEY_LOWER.service" ]] || [[ -f "/etc/systemd/system/$KEY_LOWER.service" ]]; then
         ${SYSTEMCTL_CMD} stop $KEY_LOWER
@@ -297,7 +297,7 @@ stopV2ray(){
     return 0
 }
 
-startV2ray(){
+startXray(){
     if [ -n "${SYSTEMCTL_CMD}" ] && [[ -f "/lib/systemd/system/$KEY_LOWER.service" || -f "/etc/systemd/system/$KEY_LOWER.service" ]]; then
         ${SYSTEMCTL_CMD} start $KEY_LOWER
     fi
@@ -321,7 +321,7 @@ installV2Ray(){
         return 1
     }
 
-    # Install V2Ray server config to /etc/v2ray
+    # Install V2Ray server config to /etc/xray
     if [ ! -f /etc/$KEY_LOWER/config.json ]; then
         local PORT="$(($RANDOM + 10000))"
         local UUID="$(cat '/proc/sys/kernel/random/uuid')"
@@ -379,7 +379,7 @@ EOF
 
 installInitScript(){
     if [[ -e /.dockerenv ]]; then
-        if [[ $KEY_LOWER == "v2ray" ]];then
+        if [[ $KEY_LOWER == "xray" ]];then
             if [[ ${NEW_VER} =~ "v4" ]];then
                 sed -i "s/run -c/-config/g" /root/run.sh
             else
@@ -408,7 +408,7 @@ WantedBy=multi-user.target
 EOF
         systemctl enable $KEY_LOWER.service
     fi
-    if [[ $KEY_LOWER == "v2ray" ]];then
+    if [[ $KEY_LOWER == "xray" ]];then
         local MODIFY_SERVICE=0
         local CHECK_RUN="`cat /etc/systemd/system/$KEY_LOWER.service|grep ExecStart|grep run`"
         if [[ ${NEW_VER} =~ "v4" ]];then
@@ -444,7 +444,7 @@ EOF
 remove(){
     if [[ -n "${SYSTEMCTL_CMD}" ]] && [[ -f "/etc/systemd/system/$KEY_LOWER.service" ]];then
         if pgrep "$KEY_LOWER" > /dev/null ; then
-            stopV2ray
+            stopXray
         fi
         systemctl disable $KEY_LOWER.service
         rm -rf "/usr/bin/$KEY_LOWER" "/etc/systemd/system/$KEY_LOWER.service"
@@ -458,7 +458,7 @@ remove(){
         fi
     elif [[ -n "${SYSTEMCTL_CMD}" ]] && [[ -f "/lib/systemd/system/$KEY_LOWER.service" ]];then
         if pgrep "$KEY_LOWER" > /dev/null ; then
-            stopV2ray
+            stopXray
         fi
         systemctl disable $KEY_LOWER.service
         rm -rf "/usr/bin/$KEY_LOWER" "/lib/systemd/system/$KEY_LOWER.service"
@@ -543,13 +543,13 @@ main(){
 
     if pgrep "$KEY_LOWER" > /dev/null ; then
         V2RAY_RUNNING=1
-        stopV2ray
+        stopXray
     fi
     installV2Ray "${ZIPFILE}" "${ZIPROOT}" || return $?
     installInitScript "${ZIPFILE}" "${ZIPROOT}" || return $?
     if [[ ${V2RAY_RUNNING} -eq 1 ]];then
         colorEcho ${BLUE} "Restarting $KEY service."
-        startV2ray
+        startXray
     fi
     colorEcho ${GREEN} "$KEY ${NEW_VER} is installed."
     rm -rf /tmp/$KEY_LOWER

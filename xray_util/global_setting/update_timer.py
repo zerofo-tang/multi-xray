@@ -3,7 +3,7 @@
 import os
 import time
 
-from v2ray_util import run_type
+from xray_util import run_type
 from ..util_core.config import Config
 from ..util_core.loader import Loader
 from ..util_core.utils import ColorStr, readchar

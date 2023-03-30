@@ -4,7 +4,7 @@ import random
 import string
 
 from ..util_core.group import SS
-from ..util_core.v2ray import restart
+from ..util_core.xray import restart
 from ..util_core.writer import GroupWriter
 from ..util_core.selector import GroupSelector
 from ..util_core.utils import ss_method, ColorStr, readchar

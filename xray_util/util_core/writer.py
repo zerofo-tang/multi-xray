@@ -4,8 +4,9 @@ import json
 import random
 import string
 import uuid
-
+import os
 from .config import Config
+from xray_util import run_type
 from .utils import StreamType, random_port
 from .group import Mtproto, Vmess, Socks, Vless, Trojan
 
@@ -46,7 +47,7 @@ class Writer:
 
     def load(self, path):
         '''
-        load v2ray profile
+        load xray profile
         '''
         with open(path, 'r') as json_file:
             config = json.load(json_file)
@@ -62,7 +63,7 @@ class Writer:
 
     def save(self):
         '''
-        save v2ray config.json
+        save xray config.json
         '''
         json_dump=json.dumps(self.config, indent=2)
         with open(self.path, 'w') as writer:
@@ -141,6 +142,8 @@ class StreamWriter(Writer):
                 origin_protocol = StreamType.VLESS_XTLS
             elif self.part_json["streamSettings"]["security"] == "tls":
                 origin_protocol = StreamType.VLESS_TLS
+            elif self.part_json["streamSettings"]["security"] == "reality":
+                origin_protocol = StreamType.VLESS_X_REALITY
             else:
                 origin_protocol = StreamType.VLESS_TCP
         elif self.part_json['protocol'] == 'trojan':
@@ -150,6 +153,8 @@ class StreamWriter(Writer):
             security_backup = self.part_json["streamSettings"]["security"]
             if origin_protocol == StreamType.VLESS_XTLS:
                 tls_settings_backup = self.part_json["streamSettings"]["xtlsSettings"]
+            if origin_protocol == StreamType.VLESS_X_REALITY:
+                tls_settings_backup = self.part_json["streamSettings"]["realitySettings"]
             else:
                 tls_settings_backup = self.part_json["streamSettings"]["tlsSettings"]
             if "domain" in self.part_json:
@@ -235,12 +240,12 @@ class StreamWriter(Writer):
                 tm.turn_on(False)
                 return
             tls_settings_backup["alpn"] = alpn
-
+            
         elif "vless" in self.stream_type.value:
             alpn = ["http/1.1"]
             vless = self.load_template('vless.json')
             vless["clients"][0]["id"] = str(uuid.uuid4())
-            if self.stream_type == StreamType.VLESS_XTLS:
+            if self.stream_type == StreamType.VLESS_XTLS or self.stream_type == StreamType.VLESS_X_REALITY:
                 vless["clients"][0]["flow"] = kw["flow"]
             elif self.stream_type == StreamType.VLESS_WS:
                 del vless["fallbacks"]
@@ -255,6 +260,28 @@ class StreamWriter(Writer):
             elif self.stream_type in (StreamType.VLESS_KCP, StreamType.VLESS_UTP, StreamType.VLESS_SRTP, StreamType.VLESS_DTLS, StreamType.VLESS_WECHAT, StreamType.VLESS_WG):
                 self.to_kcp(self.stream_type.value)  
                 self.part_json["streamSettings"]["kcpSettings"]["seed"] = ''.join(random.sample(string.ascii_letters + string.digits, 8))
+            elif self.stream_type == StreamType.VLESS_X_REALITY:
+                if run_type != 'xray':
+                    print("reality only support xray-core")
+                    return 
+                #keys = os.popen("/usr/bin/xray/xray x25519")
+                #if not os.path.exists("/etc/xray"):
+                #    os.makedirs("/etc/xray")
+                #prikey = ''
+                #with open("/etc/xray/reality", "a") as f:
+                #    data = ""
+                #    for line in keys.readlines():
+                #        if data == "":
+                #            prikey = line.rstrip()
+                #        data += line.replace('\n', ' ')
+                #    f.write(data.rstrip())
+                self.part_json["streamSettings"]["network"] = "tcp"
+                self.part_json["streamSettings"]["security"] = "reality"
+                self.part_json["streamSettings"]["realitySettings"]["dest"] = kw["serverName"]+":443" #'www.example.com:443'
+                self.part_json["streamSettings"]["realitySettings"]["shortIds"] = ['']
+                self.part_json["streamSettings"]["realitySettings"]["privateKey"] = kw["privateKey"]
+                self.part_json["streamSettings"]["realitySettings"]["serverNames"] = [kw["serverName"]] #'www.example.com'
+                
             else:
                 self.part_json["streamSettings"] = self.load_template('tcp.json')
                 if self.stream_type == StreamType.VLESS_GRPC:
@@ -326,6 +353,9 @@ class StreamWriter(Writer):
             self.part_json["streamSettings"]["security"] = "tls" if security_backup == "xtls" else security_backup
             self.part_json["streamSettings"]["tlsSettings"] = tls_settings_backup
 
+        if self.stream_type == StreamType.VLESS_X_REALITY:
+            self.part_json["streamSettings"]["security"] = "reality"
+            del self.part_json["streamSettings"]["tlsSettings"]
         if domain and self.stream_type not in no_tls_group:
             self.part_json["domain"] = domain
 
