@@ -25,7 +25,7 @@ UTIL_PATH="/etc/xray_util/util.cfg"
 
 UTIL_CFG="$BASE_SOURCE_PATH/xray_util/util_core/util.cfg"
 
-BASH_COMPLETION_SHELL="$BASE_SOURCE_PATH/xray"
+BASH_COMPLETION_SHELL="$BASE_SOURCE_PATH/v2ray"
 
 CLEAN_IPTABLES_SHELL="$BASE_SOURCE_PATH/xray_util/global_setting/clean_iptables.sh"
 
@@ -99,7 +99,6 @@ removeXRay() {
     pip uninstall xray_util -y
     rm -rf /usr/share/bash-completion/completions/xray.bash >/dev/null 2>&1
     rm -rf /usr/share/bash-completion/completions/xray >/dev/null 2>&1
-    rm -rf /usr/share/bash-completion/completions/xray >/dev/null 2>&1
     rm -rf /etc/bash_completion.d/xray.bash >/dev/null 2>&1
     rm -rf /usr/local/bin/xray >/dev/null 2>&1
     rm -rf /etc/xray_util >/dev/null 2>&1
@@ -118,7 +117,6 @@ removeXRay() {
     fi
 
     #删除multi-xray环境变量
-    sed -i '/xray/d' ~/$ENV_FILE
     sed -i '/xray/d' ~/$ENV_FILE
     source ~/$ENV_FILE
 
