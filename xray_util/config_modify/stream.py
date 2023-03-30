@@ -80,9 +80,9 @@ class StreamModifier:
             port_set = all_port()
             if not "443" in port_set:
                 print()
-                print(ColorStr.yellow(_("auto switch 443 port..")))
+                print(ColorStr.yellow(_(" 请输入 需要配置的 端口: ")))
                 gw = GroupWriter(self.group_tag, self.group_index)
-                gw.write_port(443)
+                gw.write_port(input())
                 sw = StreamWriter(self.group_tag, self.group_index, sType)
             if sType == StreamType.VLESS_WS:
                 host = input(_("please input fake domain: "))
@@ -98,6 +98,7 @@ class StreamModifier:
                     kw = {'mode': 'multi'}
             #elif sType == StreamType.VLESS_X_REALITY and run_type == "xray":
             elif sType == StreamType.VLESS_X_REALITY:
+                host = input(_("请输入本机的 域名: "))
                 #prikey = input(_("please input private key by command '/usr/bin/xray/xray x25519' and key your pubic key: "))
                 keys = os.popen("/usr/bin/xray/xray x25519")
                 if not os.path.exists("/etc/xray"):
@@ -109,8 +110,8 @@ class StreamModifier:
                         key.append(line.split(' ')[-1].rstrip())
                         data += line.replace('\n', ' ')
                     f.write(data.rstrip())
-                serName = input(_("please input SerName for reality:"))
-                kw = {'flow': 'xtls-rprx-vision', 'security': 'reality', 'privateKey':key[0], 'serverName': serName}
+                serName = input(_("please input SerName for reality: "))
+                kw = {'flow': 'xtls-rprx-vision', 'security': 'reality', 'privateKey':key[0], 'serverName': serName, 'host': host}
 
         elif sType == StreamType.GRPC:
             choice = readchar(_("open xray grpc multiMode?(y/n): ")).lower()

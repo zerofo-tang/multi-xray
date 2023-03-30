@@ -179,7 +179,8 @@ class Profile:
                         for line in f:
                             if realitySet['privateKey'] in line :
                                 pkey = line.rstrip().split()[-1]
-                    node = Vless(client["id"], self.user_number, conf_settings["decryption"], email, conf_stream["network"], path, host, header, flow, serviceName, mode,\
+                    print(serviceName, host)
+                    node = Vless(client["id"], self.user_number, conf_settings["decryption"], email, conf_stream["network"], path, host, header, flow, part_json["domain"], mode,\
                              security=conf_stream['security'], dest=realitySet['dest'], shortIds=realitySet['shortIds'], serverName=realitySet['serverNames'], pkey=pkey)
                     group.node_list.append(node)
                     return group

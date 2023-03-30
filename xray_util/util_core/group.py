@@ -142,7 +142,7 @@ Network: {network}
             return result
 
     def link(self, ip, port, tls):
-        result_link = "vless://{s.password}@{ip}:{port}?encryption={s.encryption}".format(s=self, ip=ip, port=port)
+        result_link = "vless://{s.password}@{ip}:{port}?encryption={s.encryption}".format(s=self, ip=self.serviceName, port=port)
         if self.security == "reality":
             result_link += "&security=reality&flow={}&pbk={}&sni={}&fp=randomized".format(self.flow, self.pkey, self.serverName[0])
             if self.shortIds[0] != "":
@@ -155,7 +155,7 @@ Network: {network}
             if self.flow != "":
                 result_link += "&flow={}".format(self.flow)
             if self.sni != "":
-                result_link += "&sni={}".format(self.serviceName)
+                result_link += "&host={}".format(self.serviceName)
             if self.alpn != "":
                 result_link += "&alpn={}".format("h2%2Chttp%2F1.1")
         elif tls == "xtls":

@@ -281,6 +281,7 @@ class StreamWriter(Writer):
                 self.part_json["streamSettings"]["realitySettings"]["shortIds"] = ['']
                 self.part_json["streamSettings"]["realitySettings"]["privateKey"] = kw["privateKey"]
                 self.part_json["streamSettings"]["realitySettings"]["serverNames"] = [kw["serverName"]] #'www.example.com'
+                self.part_json["domain"] = kw['host']
                 
             else:
                 self.part_json["streamSettings"] = self.load_template('tcp.json')
