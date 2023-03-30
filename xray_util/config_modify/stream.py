@@ -94,7 +94,9 @@ class StreamModifier:
                 flow_list = xtls_flow()
                 print("")
                 flow = CommonSelector(flow_list, _("please select xtls flow type: ")).select()
-                kw = {'flow': flow}
+                if flow == 'xtls-rprx-vision':
+                    security = 'tls'
+                kw = {'flow': flow, 'security':security}
             elif sType == StreamType.VLESS_GRPC and run_type == "xray":
                 choice = readchar(_("open xray grpc multiMode?(y/n): ")).lower()
                 if choice == 'y':

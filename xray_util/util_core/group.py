@@ -147,24 +147,18 @@ Network: {network}
             result_link += "&security=reality&flow={}&pbk={}&sni={}&fp=randomized".format(self.flow, self.pkey, self.serverName[0])
             if self.shortIds[0] != "":
                 result_link += "&sid={}".format(self.shortIds[0])
-        elif tls == "tls" and self.flow != "":
-            result_link += "&security=xtls&flow={}&fp=randomized".format(self.flow)
 
         elif tls == "tls":
             result_link += "&security=tls"
             if self.flow != "":
                 result_link += "&flow={}".format(self.flow)
-            if self.sni != "":
+            if self.serviceName != "":
                 result_link += "&host={}".format(self.serviceName)
                 result_link += "&sni={}".format(self.serviceName)
-            if self.alpn != "":
-                result_link += "&alpn={}".format("h2%2Chttp%2F1.1")
         elif self.security == "tls" and tls == "xtls":
             result_link += "&security=tls&flow={}".format(self.flow)
             if self.sni != "":
                 result_link += "&host={}".format(self.serviceName)
-            if self.alpn != "":
-                result_link += "&alpn={}".format("h2%2Chttp%2F1.1")
         elif tls == "xtls":
             result_link += "&security=xtls&flow={}".format(self.flow)
         if self.network == "ws":
