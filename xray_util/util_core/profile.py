@@ -175,11 +175,10 @@ class Profile:
                     realitySet = conf_stream['realitySettings']       
                     pkey = ""
                     if os.path.exists("/etc/"+run_type+"/reality.key"):
-                     with open("/etc/"+run_type+"/reality.key", "r") as f:
-                        for line in f:
-                            if realitySet['privateKey'] in line :
-                                pkey = line.rstrip().split()[-1]
-                    print(serviceName, host)
+                        with open("/etc/"+run_type+"/reality.key", "r") as f:
+                           for line in f:
+                               if realitySet['privateKey'] in line :
+                                   pkey = line.rstrip().split()[-1]
                     node = Vless(client["id"], self.user_number, conf_settings["decryption"], email, conf_stream["network"], path, host, header, flow, part_json["domain"], mode,\
                              security=conf_stream['security'], dest=realitySet['dest'], shortIds=realitySet['shortIds'], serverName=realitySet['serverNames'], pkey=pkey)
                     group.node_list.append(node)
