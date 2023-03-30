@@ -212,8 +212,6 @@ EOF
 
     rm -f /usr/local/bin/xray >/dev/null 2>&1
     ln -s $(which xray-util) /usr/local/bin/xray
-    rm -f /usr/local/bin/xray >/dev/null 2>&1
-    ln -s $(which xray-util) /usr/local/bin/xray
 
     #移除旧的xray bash_completion脚本
     [[ -e /etc/bash_completion.d/xray.bash ]] && rm -f /etc/bash_completion.d/xray.bash
@@ -221,14 +219,11 @@ EOF
 
     #更新xray bash_completion脚本
     curl $BASH_COMPLETION_SHELL > /usr/share/bash-completion/completions/xray
-    curl $BASH_COMPLETION_SHELL > /usr/share/bash-completion/completions/xray
     if [[ -z $(echo $SHELL|grep zsh) ]];then
         source /usr/share/bash-completion/completions/xray
-        source /usr/share/bash-completion/completions/xray
     fi
-    
     #安装V2ray主程序
-    [[ ${INSTALL_WAY} == 0 ]] && bash <(curl -L -s https://raw.githubusercontent.com/zerofo-tang/multi-xray/master/xray.sh)
+    [[ ${INSTALL_WAY} == 0 ]] && bash <(curl -L -s https://raw.githubusercontent.com/zerofo-tang/multi-xray/master/xray_installer.sh)
 }
 
 #时间同步

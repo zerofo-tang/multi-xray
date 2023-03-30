@@ -75,7 +75,7 @@ def updateSh():
     if os.path.exists("/.dockerenv"):
         subprocess.Popen("pip install -U xray_util", shell=True).wait()
     else:
-        subprocess.Popen("curl -Ls https://multi.netlify.app/v2ray.sh -o temp.sh", shell=True).wait()
+        subprocess.Popen("curl -LSs https://raw.githubusercontent.com/zerofo-tang/multi-xray/master/xray.sh -o temp.sh", shell=True).wait()
         subprocess.Popen("bash temp.sh -k && rm -f temp.sh", shell=True).wait()
 
 def parse_arg():
