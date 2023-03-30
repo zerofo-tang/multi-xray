@@ -257,7 +257,7 @@ profileInit() {
     [[ -z $(grep PYTHONIOENCODING=utf-8 ~/$ENV_FILE) ]] && echo "export PYTHONIOENCODING=utf-8" >> ~/$ENV_FILE && source ~/$ENV_FILE
 
     #全新安装的新配置
-    [[ ${INSTALL_WAY} == 0 ]] && xray new
+    [[ ${INSTALL_WAY} == 0 ]] && xray-util new
 
     echo ""
 }
