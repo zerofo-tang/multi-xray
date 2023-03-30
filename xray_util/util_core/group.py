@@ -156,6 +156,13 @@ Network: {network}
                 result_link += "&flow={}".format(self.flow)
             if self.sni != "":
                 result_link += "&host={}".format(self.serviceName)
+                result_link += "&sni={}".format(self.serviceName)
+            if self.alpn != "":
+                result_link += "&alpn={}".format("h2%2Chttp%2F1.1")
+        elif self.security == "tls" and tls == "xtls":
+            result_link += "&security=tls&flow={}".format(self.flow)
+            if self.sni != "":
+                result_link += "&host={}".format(self.serviceName)
             if self.alpn != "":
                 result_link += "&alpn={}".format("h2%2Chttp%2F1.1")
         elif tls == "xtls":
