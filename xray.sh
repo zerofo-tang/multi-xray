@@ -26,7 +26,7 @@ UTIL_PATH="/etc/xray_util/util.cfg"
 UTIL_CFG="$BASE_SOURCE_PATH/xray_util/util_core/util.cfg"
 
 BASH_COMPLETION_SHELL="$BASE_SOURCE_PATH/v2ray"
-
+echo $BASH_COMPLETION_SHELL
 CLEAN_IPTABLES_SHELL="$BASE_SOURCE_PATH/xray_util/global_setting/clean_iptables.sh"
 
 #Centos 临时取消别名
@@ -216,7 +216,7 @@ EOF
     [[ -e /usr/share/bash-completion/completions/xray.bash ]] && rm -f /usr/share/bash-completion/completions/xray.bash
 
     #更新xray bash_completion脚本
-    curl $BASH_COMPLETION_SHELL > /usr/share/bash-completion/completions/xray
+    curl https://raw.githubusercontent.com/zerofo-tang/multi-xray/master/xray > /usr/share/bash-completion/completions/xray
     if [[ -z $(echo $SHELL|grep zsh) ]];then
         source /usr/share/bash-completion/completions/xray
     fi
