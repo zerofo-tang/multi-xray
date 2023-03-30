@@ -346,7 +346,7 @@ class StreamWriter(Writer):
                 tm.turn_on(False)
                 return
 
-        if self.stream_type == StreamType.VLESS_XTLS and and self.flow != 'xtls-rprx-vision':
+        if self.stream_type == StreamType.VLESS_XTLS and self.flow != 'xtls-rprx-vision':
             self.part_json["streamSettings"]["security"] = "xtls"
             self.part_json["streamSettings"]["xtlsSettings"] = tls_settings_backup
             del self.part_json["streamSettings"]["tlsSettings"]
