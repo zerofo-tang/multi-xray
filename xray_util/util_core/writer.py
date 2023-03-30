@@ -298,7 +298,7 @@ class StreamWriter(Writer):
             if self.stream_type in (StreamType.VLESS_XTLS, StreamType.VLESS_WS, StreamType.VLESS_TLS, StreamType.VLESS_GRPC):
                 if not "certificates" in tls_settings_backup:
                     from ..config_modify.tls import TLSModifier
-                    if self.stream_type == StreamType.VLESS_XTLS:
+                    if self.stream_type == StreamType.VLESS_XTLS: # and self.flow != 'xtls-rprx-vision':
                         tm = TLSModifier(self.group_tag, self.group_index, alpn=alpn, xtls=True)
                     else:
                         tm = TLSModifier(self.group_tag, self.group_index, alpn=alpn)
@@ -346,13 +346,15 @@ class StreamWriter(Writer):
                 tm.turn_on(False)
                 return
 
-        if self.stream_type == StreamType.VLESS_XTLS:
+        if self.stream_type == StreamType.VLESS_XTLS and and self.flow != 'xtls-rprx-vision':
             self.part_json["streamSettings"]["security"] = "xtls"
             self.part_json["streamSettings"]["xtlsSettings"] = tls_settings_backup
             del self.part_json["streamSettings"]["tlsSettings"]
         elif self.stream_type not in no_tls_group and origin_protocol not in no_tls_group:
             self.part_json["streamSettings"]["security"] = "tls" if security_backup == "xtls" else security_backup
             self.part_json["streamSettings"]["tlsSettings"] = tls_settings_backup
+        else:
+            self.part_json["streamSettings"]["security"] = "tls"
 
         if self.stream_type == StreamType.VLESS_X_REALITY:
             self.part_json["streamSettings"]["security"] = "reality"
