@@ -4,7 +4,7 @@
 sudo pip install xray-util@git+https://github.com/zerofo-tang/multi-xray@master
 ```
 ### Upgrade multi-xray
-#### 方法一
+#### 方法一 (3.10.9.10 之后 版本才支持)
 ```
 sudo pip install -U xray-util@git+https://github.com/zerofo-tang/multi-xray@master
 ```
