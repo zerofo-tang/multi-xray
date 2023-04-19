@@ -164,6 +164,23 @@ class Xray:
     @classmethod
     def new(cls):
         subprocess.call("rm -rf /etc/{soft}/config.json && cp {package_path}/server.json /etc/{soft}/config.json".format(soft=run_type, package_path=pkg_resources.resource_filename('xray_util', "json_template")), shell=True)
+        keys = os.popen("/usr/bin/xray/xray x25519")
+        if not os.path.exists("/etc/xray"):
+            os.makedirs("/etc/xray")
+        
+        key = []
+        with open("/etc/xray/reality.key", "w") as f:
+            data = ""
+            for line in keys.readlines():
+                key.append(line.split(' ')[-1].rstrip())
+                data += line.replace('\n', ' ')
+            f.write(data.rstrip())
+            f.write("\n")
+        pkeys = list(key)
+        privkey = pkeys[0].split()[-1]
+        pubkey = pkeys[-1].split()[-1]
+        print("new privkey: {}".format(ColorStr.green(privkey)))
+        print("new pubkey: {}".format(ColorStr.green(pubkey)))
         new_uuid = uuid.uuid4()
         print("new UUID: {}".format(ColorStr.green(str(new_uuid))))
         new_port = random_port(1000, 65535)
@@ -171,7 +188,15 @@ class Xray:
         subprocess.call("sed -i \"s/cc4f8d5b-967b-4557-a4b6-bde92965bc27/{uuid}/g\" /etc/{soft}/config.json && sed -i \"s/999999999/{port}/g\" /etc/{soft}/config.json".format(uuid=new_uuid, port=new_port, soft=run_type), shell=True)
         if run_type == "xray":
             subprocess.call("sed -i \"s/v2ray/xray/g\" /etc/xray/config.json", shell=True)
-        from ..config_modify import stream
-        stream.StreamModifier().random_kcp()
+            subprocess.call("sed -i \"s/vmess/vless/g\" /etc/xray/config.json", shell=True)
+            subprocess.call("sed -i \"17a \\\"fallbacks\\\": \{\\\"dest\\\": 80\}\" /etc/xray/config.json", shell=True)
+            subprocess.call("sed -i \"17a ,\\\"decryption\\\": \\\"none\\\"\", /etc/xray/config.json", shell=True)
+            subprocess.call("sed -i \"13a \\\"flow\\\": \\\"xtls-rprx-vision\\\",\" /etc/xray/config.json", shell=True)
+            subprocess.call("sed -i 's/\"security\": \"none\",/\"security\": \"reality\",/g' /etc/xray/config.json", shell=True)
+            subprocess.call("sed -i 's/\"realitySettings\": {},/\"realitySettings\": {\"dest\": \"www.cloudflare.com:443\", \\n\"shortIds\": [\"\"], \\n\"privateKey\": \"zerofo_targetKey\", \\n\"serverNames\": [\"www.cloudflare.com\"]},/g' /etc/xray/config.json", shell=True)
+            subprocess.call("sed -i \"s/zerofo_targetKey/{privkey}/g\" /etc/xray/config.json".format(privkey=privkey), shell=True)
+            
+        #from ..config_modify import stream
+        #stream.StreamModifier().random_kcp()
         open_port()
         cls.restart()

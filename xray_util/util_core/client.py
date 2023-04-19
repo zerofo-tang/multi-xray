@@ -81,7 +81,15 @@ class ClientWriter:
             del self.client_config["outbounds"][0]["streamSettings"]["xtlsSettings"]["certificates"]
             del self.client_config["outbounds"][0]["streamSettings"]["xtlsSettings"]["alpn"]
             del self.client_config["outbounds"][0]["mux"]
-
+        elif self.group.tls == 'reality':
+            pbkey = ''
+            with open("/etc/xray/reality.key", "r") as keyf:
+                for keys in keyf.readlines():
+                    if self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["privateKey"] in keys:
+                        pbkey = keys.split()[-1]  
+            self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["pubicKey"] = pbkey
+            del self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["privateKey"]
+            
     def write(self):
         '''
         写客户端配置文件函数
