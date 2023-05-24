@@ -197,7 +197,7 @@ EOF
         $IPTABLE_WAY-save -c > /root/.iptables
     fi
 
-    pip install -U xray_util
+    pip install -U xray-util@git+https://github.com/zerofo-tang/multi-xray@master
 
     if [[ -e $UTIL_PATH ]];then
         [[ -z $(cat $UTIL_PATH|grep lang) ]] && echo "lang=en" >> $UTIL_PATH
