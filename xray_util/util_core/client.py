@@ -88,6 +88,12 @@ class ClientWriter:
                     if self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["privateKey"] in keys:
                         pbkey = keys.split()[-1]  
             self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["pubicKey"] = pbkey
+            self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["serverName"] = \
+                self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["serverNames"][0]
+            del self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["serverNames"]
+            self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["shortId"] = \
+                self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["shortIds"][0]
+            del self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["shortIds"]
             del self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["privateKey"]
             
     def write(self):
