@@ -671,6 +671,19 @@ class NodeWriter(Writer):
     def del_port(self, group):
         if type(group.node_list[0]) == Mtproto:
             clean_mtproto_tag(self.config, group.index)
+        if type(group.node_list[0]) == Vless and \
+            self.config["inbounds"][group.index]["streamSettings"]["security"] == "reality":
+            dkey = self.config["inbounds"][group.index]["streamSettings"]["realitySettings"]["privateKey"]
+            txtdata=""
+            with open("/etc/xray/reality.key", "r") as f:
+                txtdata = f.readlines()
+                for idx, line in enumerate(txtdata):
+                    if dkey in line:
+                        del txtdata[idx]
+            if txtdata != "":
+                with open("/etc/xray/readlity.key", "w") as f:
+                    f.writelines(txtdata)
+
         del self.config["inbounds"][group.index]
         print(_("del port success!"))
         self.save()
