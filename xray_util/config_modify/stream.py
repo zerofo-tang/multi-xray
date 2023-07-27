@@ -117,6 +117,8 @@ class StreamModifier:
                     f.write(data.rstrip())
                     f.write("\n")
                 serName = input(ColorStr.yellow(_("请输入reality 伪装需要的 域名 如(support.microsoft.com) :  ")))
+                if serName == "":
+                    serName = "support.microsoft.com"
                 kw = {'flow': 'xtls-rprx-vision', 'security': 'reality', 'privateKey':key[0], 'serverName': serName, 'host': host}
 
         elif sType == StreamType.GRPC:
