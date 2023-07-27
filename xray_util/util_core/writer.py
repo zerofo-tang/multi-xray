@@ -674,13 +674,10 @@ class NodeWriter(Writer):
         if type(group.node_list[0]) == Vless and \
             self.config["inbounds"][group.index]["streamSettings"]["security"] == "reality":
             dkey = self.config["inbounds"][group.index]["streamSettings"]["realitySettings"]["privateKey"]
-            txtdata=""
+            txtdata=[]
             with open("/etc/xray/reality.key", "r") as f:
-                txtdata = f.readlines()
-                for idx, line in enumerate(txtdata):
-                    if dkey in line:
-                        del txtdata[idx]
-            if txtdata != "":
+                txtdata = [ line for line in f.readlines() if dkey not in line]
+            if len(txtdata) == 0:
                 with open("/etc/xray/readlity.key", "w") as f:
                     f.writelines(txtdata)
 
