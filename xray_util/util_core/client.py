@@ -89,7 +89,6 @@ class ClientWriter:
                         pbkey = keys.split()[-1]  
             self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["pubicKey"] = pbkey
             self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["fingerprint"] = "chrome"
-            self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["maxTimeDiff"] = 15000
             self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["serverName"] = \
                 self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["serverNames"][0]
             del self.client_config["outbounds"][0]["streamSettings"]["realitySettings"]["serverNames"]
