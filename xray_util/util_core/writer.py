@@ -281,6 +281,8 @@ class StreamWriter(Writer):
                 self.part_json["streamSettings"]["realitySettings"]["shortIds"] = ['']
                 self.part_json["streamSettings"]["realitySettings"]["privateKey"] = kw["privateKey"]
                 self.part_json["streamSettings"]["realitySettings"]["serverNames"] = [kw["serverName"]] #'www.example.com'
+                
+                self.part_json["streamSettings"]["realitySettings"]["maxTimeDiff"] = 15000
                 self.part_json["domain"] = kw['host']
                 
             else:
