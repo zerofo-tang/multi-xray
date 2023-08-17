@@ -189,6 +189,7 @@ class Xray:
         print("new port: {}".format(ColorStr.green(str(new_port))))
         config_factory = Config()
         template_path = config_factory.json_path
+        domain = input("请输入本机域名: ")
         with open('%s/server.json'%template_path,'r') as f,  open("/etc/%s/config.json"%run_type, "w") as o:
             cfg=json.loads(f.read())
             cfg["log"]["error"] = cfg["log"]["error"].replace("v2ray", run_type)
@@ -202,6 +203,7 @@ class Xray:
             inbound["settings"]["fallbacks"] = [{"dest": 80}]
             inbound["streamSettings"]["network"] = "tcp"
             inbound["streamSettings"]["security"] = "reality"
+            inbound["domain"] = domain
             inbound["streamSettings"]["realitySettings"] = {"dest": "www.cloudflare.com:443", "shortIds": [""], "privateKey": privkey, "serverNames": ["www.cloudflare.com"]}
             cfg["inbounds"][0] = inbound
             a = json.dumps(cfg,indent = 4, sort_keys=True)
