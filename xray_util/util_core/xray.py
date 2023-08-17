@@ -6,6 +6,7 @@ import uuid
 import time
 import subprocess
 import pkg_resources
+from .config import Config
 from functools import wraps
 from xray_util import run_type
 from .utils import ColorStr, open_port, get_ip, is_ipv6, random_port
@@ -185,7 +186,9 @@ class Xray:
         print("new UUID: {}".format(ColorStr.green(str(new_uuid))))
         new_port = random_port(1000, 65535)
         print("new port: {}".format(ColorStr.green(str(new_port))))
-        with open('../json_template/server.json','r') as f,  open("/etc/%s/config.json"%run_type, "w") as o:
+        config_factory = Config()
+        template_path = config_factory.json_path
+        with open('%s/server.json'%template_path,'r') as f,  open("/etc/%s/config.json"%run_type, "w") as o:
             cfg=json.loads(f.read())
             inbound = cfg["inbounds"][0]
             inbound["protocol"] = "vless"
