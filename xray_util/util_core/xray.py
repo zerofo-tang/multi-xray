@@ -185,17 +185,21 @@ class Xray:
         print("new UUID: {}".format(ColorStr.green(str(new_uuid))))
         new_port = random_port(1000, 65535)
         print("new port: {}".format(ColorStr.green(str(new_port))))
-        subprocess.call("sed -i \"s/cc4f8d5b-967b-4557-a4b6-bde92965bc27/{uuid}/g\" /etc/{soft}/config.json && sed -i \"s/999999999/{port}/g\" /etc/{soft}/config.json".format(uuid=new_uuid, port=new_port, soft=run_type), shell=True)
-        if run_type == "xray":
-            subprocess.call("sed -i \"s/v2ray/xray/g\" /etc/xray/config.json", shell=True)
-            subprocess.call("sed -i \"s/vmess/vless/g\" /etc/xray/config.json", shell=True)
-            subprocess.call("sed -i \"17a \\\"fallbacks\\\": \[\{\\\"dest\\\": 80\}\]\" /etc/xray/config.json", shell=True)
-            subprocess.call("sed -i \"17a ,\\\"decryption\\\": \\\"none\\\"\", /etc/xray/config.json", shell=True)
-            subprocess.call("sed -i \"13a \\\"flow\\\": \\\"xtls-rprx-vision\\\",\" /etc/xray/config.json", shell=True)
-            subprocess.call("sed -i 's/\"network\": \"\",/\"network\": \"tcp\",/g' /etc/xray/config.json", shell=True)
-            subprocess.call("sed -i 's/\"security\": \"none\",/\"security\": \"reality\",/g' /etc/xray/config.json", shell=True)
-            subprocess.call("sed -i 's/\"realitySettings\": {},/\"realitySettings\": {\"dest\": \"www.cloudflare.com:443\", \\n\"shortIds\": [\"\"], \\n\"privateKey\": \"zerofo_targetKey\", \\n\"serverNames\": [\"www.cloudflare.com\"]},/g' /etc/xray/config.json", shell=True)
-            subprocess.call("sed -i \"s/zerofo_targetKey/{privkey}/g\" /etc/xray/config.json".format(privkey=privkey), shell=True)
+        with open('server.json','r') as f,  open("/etc/%s/config.json"%run_type, "w") as o:
+            cfg=json.loads(f.read())
+            inbound = cfg["inbounds"][0]
+            inbound["protocol"] = "vless"
+            inbound["port"] = new_port
+            inbound["settings"]["clients"][0]["id"] = new_uuid
+            inbound["settings"]["clients"][0]["flow"] = "xtls-rprx-vision"
+            inbound["settings"]["decryption"] = "none"
+            inbound["settings"]["fallbacks"] = [{"dest": 80}]
+            inbound["streamSettings"]["network"] = "tcp"
+            inbound["streamSettings"]["security"] = "reality"
+            inbound["streamSettings"]["realitySettings"] = {"dest": "www.cloudflare.com:443", "shortIds": [""], "privateKey": "test", "serverNames": ["www.cloudflare.com"]}
+            cfg["inbounds"][0] = inbound
+            a = json.dumps(cfg,indent = 4, sort_keys=True)
+            o.write(a)
             
         #from ..config_modify import stream
         #stream.StreamModifier().random_kcp()
