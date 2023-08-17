@@ -6,6 +6,7 @@ import uuid
 import time
 import subprocess
 import pkg_resources
+import json
 from .config import Config
 from functools import wraps
 from xray_util import run_type
