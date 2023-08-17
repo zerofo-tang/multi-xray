@@ -200,7 +200,7 @@ class Xray:
             inbound["settings"]["fallbacks"] = [{"dest": 80}]
             inbound["streamSettings"]["network"] = "tcp"
             inbound["streamSettings"]["security"] = "reality"
-            inbound["streamSettings"]["realitySettings"] = {"dest": "www.cloudflare.com:443", "shortIds": [""], "privateKey": "test", "serverNames": ["www.cloudflare.com"]}
+            inbound["streamSettings"]["realitySettings"] = {"dest": "www.cloudflare.com:443", "shortIds": [""], "privateKey": privkey, "serverNames": ["www.cloudflare.com"]}
             cfg["inbounds"][0] = inbound
             a = json.dumps(cfg,indent = 4, sort_keys=True)
             o.write(a)
