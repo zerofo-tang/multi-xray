@@ -191,6 +191,8 @@ class Xray:
         template_path = config_factory.json_path
         with open('%s/server.json'%template_path,'r') as f,  open("/etc/%s/config.json"%run_type, "w") as o:
             cfg=json.loads(f.read())
+            cfg["log"]["error"] = cfg["log"]["error"].replace("v2ray", run_type)
+            cfg["log"]["access"] = cfg["log"]["access"].replace("v2ray", run_type)
             inbound = cfg["inbounds"][0]
             inbound["protocol"] = "vless"
             inbound["port"] = new_port
