@@ -24,7 +24,14 @@ class Loader:
                 if not hasattr(self.profile, "network"):
                     raise ValueError
             else:
-                raise FileNotFoundError
+                cls.new()
+                with open(self.path, 'rb') as reader:
+                    self.profile = pickle.load(reader)
+                if os.path.getmtime(self.profile.path) != self.profile.modify_time:
+                    raise ValueError
+                if not hasattr(self.profile, "network"):
+                    raise ValueError
+                # raise FileNotFoundError
         except Exception:
             self.profile = Profile()
             self.save_profile()
