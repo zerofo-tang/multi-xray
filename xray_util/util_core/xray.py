@@ -192,6 +192,7 @@ class Xray:
             subprocess.call("sed -i \"17a \\\"fallbacks\\\": \[\{\\\"dest\\\": 80\}\]\" /etc/xray/config.json", shell=True)
             subprocess.call("sed -i \"17a ,\\\"decryption\\\": \\\"none\\\"\", /etc/xray/config.json", shell=True)
             subprocess.call("sed -i \"13a \\\"flow\\\": \\\"xtls-rprx-vision\\\",\" /etc/xray/config.json", shell=True)
+            subprocess.call("sed -i 's/\"network\": \"\",/\"network\": \"tcp\",/g' /etc/xray/config.json", shell=True)
             subprocess.call("sed -i 's/\"security\": \"none\",/\"security\": \"reality\",/g' /etc/xray/config.json", shell=True)
             subprocess.call("sed -i 's/\"realitySettings\": {},/\"realitySettings\": {\"dest\": \"www.cloudflare.com:443\", \\n\"shortIds\": [\"\"], \\n\"privateKey\": \"zerofo_targetKey\", \\n\"serverNames\": [\"www.cloudflare.com\"]},/g' /etc/xray/config.json", shell=True)
             subprocess.call("sed -i \"s/zerofo_targetKey/{privkey}/g\" /etc/xray/config.json".format(privkey=privkey), shell=True)
