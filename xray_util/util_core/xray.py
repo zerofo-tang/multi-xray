@@ -189,7 +189,7 @@ class Xray:
         if run_type == "xray":
             subprocess.call("sed -i \"s/v2ray/xray/g\" /etc/xray/config.json", shell=True)
             subprocess.call("sed -i \"s/vmess/vless/g\" /etc/xray/config.json", shell=True)
-            subprocess.call("sed -i \"17a \\\"fallbacks\\\": \{\\\"dest\\\": 80\}\" /etc/xray/config.json", shell=True)
+            subprocess.call("sed -i \"17a \\\"fallbacks\\\": \[\{\\\"dest\\\": 80\}\]\" /etc/xray/config.json", shell=True)
             subprocess.call("sed -i \"17a ,\\\"decryption\\\": \\\"none\\\"\", /etc/xray/config.json", shell=True)
             subprocess.call("sed -i \"13a \\\"flow\\\": \\\"xtls-rprx-vision\\\",\" /etc/xray/config.json", shell=True)
             subprocess.call("sed -i 's/\"security\": \"none\",/\"security\": \"reality\",/g' /etc/xray/config.json", shell=True)
