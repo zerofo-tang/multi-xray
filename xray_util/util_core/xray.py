@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+s#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
 import sys
@@ -194,7 +194,7 @@ class Xray:
             inbound = cfg["inbounds"][0]
             inbound["protocol"] = "vless"
             inbound["port"] = new_port
-            inbound["settings"]["clients"][0]["id"] = new_uuid
+            inbound["settings"]["clients"][0]["id"] = str(new_uuid)
             inbound["settings"]["clients"][0]["flow"] = "xtls-rprx-vision"
             inbound["settings"]["decryption"] = "none"
             inbound["settings"]["fallbacks"] = [{"dest": 80}]
