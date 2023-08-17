@@ -19,19 +19,17 @@ class Loader:
             if os.path.exists(self.path):
                 with open(self.path, 'rb') as reader:
                     self.profile = pickle.load(reader)
+                if not os.path.exists(self.profile.path):
+                    from .xray import Xray
+                    Xray.new()
+                    with open(self.path, 'rb') as reader:
+                        self.profile = pickle.load(reader)
                 if os.path.getmtime(self.profile.path) != self.profile.modify_time:
                     raise ValueError
                 if not hasattr(self.profile, "network"):
                     raise ValueError
             else:
-                cls.new()
-                with open(self.path, 'rb') as reader:
-                    self.profile = pickle.load(reader)
-                if os.path.getmtime(self.profile.path) != self.profile.modify_time:
-                    raise ValueError
-                if not hasattr(self.profile, "network"):
-                    raise ValueError
-                # raise FileNotFoundError
+                raise FileNotFoundError
         except Exception:
             self.profile = Profile()
             self.save_profile()
